@@ -1,59 +1,17 @@
+import "server-only";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { demoStore } from "@/lib/demo/store";
-import type {
-  ActivityLog,
-  ContactMessage,
-  Customer,
-  FinancingInquiry,
-  Inquiry,
-  TestDriveRequest,
-  TradeInRequest,
-} from "@/types";
+import {
+  applyDemoCrm,
+  EMPTY_DEMO_CRM,
+  snapshotDemoCrm,
+  type DemoCrmSnapshot,
+} from "@/lib/demo/crm-state";
+
+export type { DemoCrmSnapshot } from "@/lib/demo/crm-state";
+export { applyDemoCrm, snapshotDemoCrm } from "@/lib/demo/crm-state";
 
 const FILE = path.join(process.cwd(), ".demo", "crm.json");
-
-export type DemoCrmSnapshot = {
-  messages: ContactMessage[];
-  inquiries: Inquiry[];
-  customers: Customer[];
-  testDrives: TestDriveRequest[];
-  tradeIns: TradeInRequest[];
-  financing: FinancingInquiry[];
-  activity: ActivityLog[];
-};
-
-const EMPTY: DemoCrmSnapshot = {
-  messages: [],
-  inquiries: [],
-  customers: [],
-  testDrives: [],
-  tradeIns: [],
-  financing: [],
-  activity: [],
-};
-
-export function snapshotDemoCrm(): DemoCrmSnapshot {
-  return {
-    messages: structuredClone(demoStore.messages),
-    inquiries: structuredClone(demoStore.inquiries),
-    customers: structuredClone(demoStore.customers),
-    testDrives: structuredClone(demoStore.testDrives),
-    tradeIns: structuredClone(demoStore.tradeIns),
-    financing: structuredClone(demoStore.financing),
-    activity: structuredClone(demoStore.activity),
-  };
-}
-
-export function applyDemoCrm(data: DemoCrmSnapshot): void {
-  demoStore.messages = structuredClone(data.messages);
-  demoStore.inquiries = structuredClone(data.inquiries);
-  demoStore.customers = structuredClone(data.customers);
-  demoStore.testDrives = structuredClone(data.testDrives);
-  demoStore.tradeIns = structuredClone(data.tradeIns);
-  demoStore.financing = structuredClone(data.financing);
-  demoStore.activity = structuredClone(data.activity);
-}
 
 export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
   try {
@@ -75,8 +33,8 @@ export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
     // Fall back to an empty CRM snapshot.
   }
 
-  applyDemoCrm(EMPTY);
-  return EMPTY;
+  applyDemoCrm(EMPTY_DEMO_CRM);
+  return EMPTY_DEMO_CRM;
 }
 
 export function persistDemoCrmToDisk(data: DemoCrmSnapshot = snapshotDemoCrm()): DemoCrmSnapshot {
