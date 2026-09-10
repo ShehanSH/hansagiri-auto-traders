@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isFullAdmin() {
+      return signedIn()
+        && firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.role in ['super_admin', 'admin'];
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|avif)');
+    }
+
+    match /trade-in-uploads/{uploadId}/{fileName} {
+      allow create: if isImage() && request.resource.size < 8 * 1024 * 1024;
+      allow read: if true;
+      allow delete: if isFullAdmin();
+    }
+
+    match /vehicles/{allPaths=**} {
+      allow read: if true;
+      allow write: if isFullAdmin() && isImage() && request.resource.size < 8 * 1024 * 1024;
+    }
+
+    match /media/{allPaths=**} {
+      allow read: if true;
+      allow write: if isFullAdmin() && isImage() && request.resource.size < 8 * 1024 * 1024;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

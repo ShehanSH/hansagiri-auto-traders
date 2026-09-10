@@ -1,0 +1,2520 @@
+You are a senior full-stack software engineer, UI/UX designer, Firebase architect, security engineer, and performance engineer.
+
+I want you to design and develop a complete modern automotive dealership web application for:
+
+HANSAGIRI AUTO TRADERS
+
+Business description:
+
+"Hansagiri Auto Traders is a premier auto dealership specializing in quality new and pre-owned vehicles. We’re committed to honest pricing, dependable service, and putting you in the right ride. Drive with confidence every time."
+
+This is a professional car trading/dealership business website with a public-facing website and a secure admin dashboard.
+
+==================================================
+1. BRANDING & DESIGN DIRECTION
+==================================================
+
+I have provided two reference images:
+
+1. Hansagiri Auto Traders logo
+2. Hansagiri Auto Traders Facebook cover image
+
+Use these uploaded images as the primary visual references for the brand identity.
+
+The existing brand uses:
+
+- Metallic gold
+- Champagne gold
+- Black
+- White
+- Dark charcoal
+
+The website must visually match the existing Hansagiri Auto Traders branding.
+
+IMPORTANT:
+
+Do NOT redesign the logo.
+
+Use the provided Hansagiri Auto Traders logo as the actual website logo.
+
+Do not change the logo typography, proportions, car silhouette, or brand identity.
+
+The visual style should communicate:
+
+- Premium
+- Luxury
+- Automotive
+- Trustworthy
+- Professional
+- Modern
+- Elegant
+- High-end dealership
+- Clean and spacious
+
+Avoid:
+
+- Generic Bootstrap-looking layouts
+- Old-fashioned car dealership websites
+- Excessive gradients
+- Excessive animations
+- Cheap-looking cards
+- Too many colors
+- Oversized rounded corners everywhere
+- Legacy HTML form controls
+- Cluttered dashboards
+
+Use gold primarily as an accent color.
+
+Recommended design tokens:
+
+Primary:
+#C9A227 / metallic gold family
+
+Dark:
+#050505
+
+Secondary dark:
+#111111
+
+Charcoal:
+#1C1C1C
+
+Light:
+#F7F7F7
+
+White:
+#FFFFFF
+
+Use CSS variables/design tokens so the colors can be changed easily later.
+
+The website should look excellent on:
+
+- Desktop
+- Laptop
+- Tablet
+- Mobile
+
+Mobile-first responsive design is required.
+
+==================================================
+2. RECOMMENDED TECHNOLOGY STACK
+==================================================
+
+Use:
+
+Frontend:
+- Next.js
+- TypeScript
+- React
+- Tailwind CSS
+
+UI:
+- Modern component architecture
+- Lucide icons or another lightweight icon library
+- Reusable components
+- Accessible components
+
+Backend:
+- Firebase
+
+Firebase services:
+
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Storage
+- Firebase Cloud Functions only where actually necessary
+
+Deployment:
+- The application should be compatible with Vercel.
+- Firebase should handle database, authentication and storage.
+
+Do not introduce unnecessary backend infrastructure.
+
+Do not use a traditional SQL database.
+
+Database:
+Firebase Firestore
+
+File storage:
+Firebase Storage
+
+Authentication:
+Firebase Authentication
+
+==================================================
+3. APPLICATION ARCHITECTURE
+==================================================
+
+Structure the project professionally.
+
+Suggested structure:
+
+/app
+/components
+/components/ui
+/components/public
+/components/admin
+/lib
+/lib/firebase
+/lib/services
+/lib/validation
+/types
+/hooks
+/utils
+/config
+/public
+
+Use a clean separation between:
+
+1. Public website
+2. Admin dashboard
+3. Firebase services
+4. Data models
+5. Validation
+6. UI components
+
+Use reusable components instead of duplicating code.
+
+Use TypeScript strictly.
+
+Avoid:
+
+- any wherever possible
+- duplicated logic
+- giant components
+- hardcoded business data
+- hardcoded Firebase configuration
+- client-side-only security assumptions
+
+==================================================
+4. PUBLIC WEBSITE
+==================================================
+
+Create the following main pages:
+
+/
+
+Home
+
+/inventory
+
+Vehicle inventory listing
+
+/inventory/[vehicleId]
+
+Vehicle details
+
+/about
+
+About Hansagiri Auto Traders
+
+/services
+
+Services
+
+/contact
+
+Contact
+
+/test-drive
+
+Test drive request
+
+/trade-in
+
+Vehicle trade-in inquiry
+
+/financing
+
+Financing information/request
+
+==================================================
+5. HOME PAGE
+==================================================
+
+Create a premium automotive dealership landing page.
+
+Hero section:
+
+Use a large premium automotive visual.
+
+Hero content:
+
+"HANSAGIRI AUTO TRADERS"
+
+"Drive With Confidence."
+
+Supporting text:
+
+"Quality new and pre-owned vehicles, trusted service, and honest deals."
+
+Primary CTA:
+
+"Browse Vehicles"
+
+Secondary CTA:
+
+"Contact Us"
+
+Additional CTA:
+
+"Book a Test Drive"
+
+Hero should feel premium and cinematic.
+
+Do not make the hero unnecessarily heavy or slow.
+
+Use optimized images.
+
+--------------------------------------------------
+
+FEATURED INVENTORY
+
+Display selected vehicles from Firestore.
+
+Each vehicle card should include:
+
+- Vehicle image
+- Make
+- Model
+- Year
+- Price
+- Mileage
+- Fuel type
+- Transmission
+- Location
+- Availability status
+
+Buttons:
+
+"View Details"
+
+"Contact Dealer"
+
+"Book Test Drive"
+
+Add:
+
+"View All Vehicles"
+
+--------------------------------------------------
+
+WHY CHOOSE US
+
+Create a premium section showing:
+
+- Quality Vehicles
+- Transparent Pricing
+- Trusted Service
+- Customer First
+- Carefully Selected Cars
+- Professional Assistance
+
+Use modern icons.
+
+--------------------------------------------------
+
+NEW & PRE-OWNED
+
+Create two visually attractive sections:
+
+NEW VEHICLES
+
+PRE-OWNED VEHICLES
+
+Each should link to filtered inventory.
+
+--------------------------------------------------
+
+CALL TO ACTION
+
+Create a strong CTA section:
+
+"Looking for Your Next Vehicle?"
+
+"Let Hansagiri Auto Traders help you find the right car."
+
+Buttons:
+
+"Browse Inventory"
+
+"Contact Us"
+
+--------------------------------------------------
+
+CONTACT PREVIEW
+
+Show:
+
+- Phone
+- WhatsApp
+- Email
+- Location
+- Opening hours
+
+Use clickable phone and WhatsApp buttons on mobile.
+
+==================================================
+6. VEHICLE INVENTORY
+==================================================
+
+This is one of the most important parts of the application.
+
+Create a modern vehicle marketplace-style inventory page.
+
+Features:
+
+Search by:
+
+- Make
+- Model
+- Keyword
+
+Filters:
+
+- New / Used
+- Make
+- Model
+- Year
+- Price range
+- Mileage
+- Fuel type
+- Transmission
+- Body type
+- Availability
+
+Sorting:
+
+- Newest
+- Price: Low to High
+- Price: High to Low
+- Year: Newest
+- Mileage: Lowest
+
+Desktop:
+
+Use a premium grid layout.
+
+Mobile:
+
+Use optimized single-column cards.
+
+Provide:
+
+- Search bar
+- Filter drawer
+- Sort dropdown
+- Result count
+- Clear filters
+
+Do not load every vehicle image at once.
+
+Use efficient Firestore queries and pagination.
+
+==================================================
+7. VEHICLE DETAIL PAGE
+==================================================
+
+Create a high-quality vehicle details page similar to a premium automotive marketplace.
+
+Display:
+
+Vehicle gallery:
+
+- Main image
+- Thumbnail images
+- Full-screen image viewer
+- Next/previous navigation
+
+Vehicle information:
+
+- Make
+- Model
+- Variant
+- Year
+- Price
+- Mileage
+- Fuel
+- Transmission
+- Body type
+- Engine
+- Color
+- Condition
+- Registration status
+- Location
+- Stock ID
+
+Status:
+
+- Available
+- Reserved
+- Sold
+
+Description.
+
+Key specifications.
+
+Features:
+
+- Air Conditioning
+- Power Steering
+- Power Windows
+- Central Locking
+- Reverse Camera
+- Parking Sensors
+- Sunroof
+- Leather Seats
+- Apple CarPlay
+- Android Auto
+- etc.
+
+Only display features that exist for the vehicle.
+
+--------------------------------------------------
+
+CONTACT ACTIONS
+
+Add highly visible:
+
+"Call Now"
+
+"WhatsApp"
+
+"Send Inquiry"
+
+"Book Test Drive"
+
+"Request More Information"
+
+--------------------------------------------------
+
+PRICE SECTION
+
+Display price professionally.
+
+Do not hardcode currency assumptions into the application.
+
+Store currency configuration in the system settings.
+
+Default can be:
+
+LKR
+
+But make this configurable from admin settings.
+
+==================================================
+8. CUSTOMER INQUIRY SYSTEM
+==================================================
+
+Customers should NOT be required to create an account.
+
+This is important.
+
+The public website should allow customers to submit inquiries without login.
+
+Inquiry form:
+
+- Name
+- Phone number
+- WhatsApp number
+- Email
+- Vehicle
+- Message
+- Preferred contact method
+
+Optional:
+
+- Preferred date
+- Preferred time
+
+Submit button:
+
+"Send Inquiry"
+
+Store inquiries in Firestore.
+
+Automatically assign:
+
+- createdAt
+- status
+- vehicleId
+- source
+- timestamps
+
+Inquiry statuses:
+
+- New
+- Contacted
+- Follow-up
+- Interested
+- Negotiation
+- Converted
+- Closed
+- Lost
+
+==================================================
+9. TEST DRIVE SYSTEM
+==================================================
+
+Create a test drive request form.
+
+Fields:
+
+- Customer name
+- Phone
+- WhatsApp
+- Email
+- Vehicle
+- Preferred date
+- Preferred time
+- Message
+
+Status:
+
+- Pending
+- Confirmed
+- Completed
+- Cancelled
+- No Show
+
+Admin can manage these requests.
+
+IMPORTANT:
+
+This is a REQUEST system, not an automatic booking system.
+
+Admin must confirm the request.
+
+==================================================
+10. TRADE-IN SYSTEM
+==================================================
+
+Create a trade-in inquiry page.
+
+Customer can submit:
+
+Customer information:
+
+- Name
+- Phone
+- Email
+
+Current vehicle:
+
+- Make
+- Model
+- Year
+- Mileage
+- Fuel
+- Transmission
+- Condition
+- Registration status
+
+Optional:
+
+- Expected price
+- Additional notes
+
+Allow customer to upload vehicle images.
+
+Use Firebase Storage.
+
+Admin can review trade-in requests.
+
+Statuses:
+
+- New
+- Reviewing
+- Valuation
+- Offer Sent
+- Accepted
+- Rejected
+- Closed
+
+==================================================
+11. FINANCING PAGE
+==================================================
+
+Create a professional financing information page.
+
+Do NOT implement actual financial transactions.
+
+Provide:
+
+- Financing information
+- Required documents
+- General process
+- Contact dealership
+
+Optional inquiry form:
+
+- Name
+- Phone
+- Vehicle
+- Estimated budget
+- Employment type
+- Message
+
+Clearly indicate that final financing terms depend on the relevant financial institution/dealership approval.
+
+==================================================
+12. ABOUT PAGE
+==================================================
+
+Create a professional About Us page.
+
+Include:
+
+"Hansagiri Auto Traders"
+
+Business description:
+
+"Hansagiri Auto Traders is a premier auto dealership specializing in quality new and pre-owned vehicles. We’re committed to honest pricing, dependable service, and putting you in the right ride. Drive with confidence every time."
+
+Include sections:
+
+- Who We Are
+- Our Mission
+- Why Customers Choose Us
+- Our Commitment
+- Quality & Transparency
+
+Use automotive imagery.
+
+==================================================
+13. SERVICES PAGE
+==================================================
+
+Create services section/page:
+
+- Vehicle Sales
+- New Vehicles
+- Pre-Owned Vehicles
+- Vehicle Sourcing
+- Trade-In Assistance
+- Financing Assistance
+- Test Drives
+- After-Sales Support
+
+Keep the content editable from the admin dashboard where practical.
+
+==================================================
+14. CONTACT PAGE
+==================================================
+
+Create a premium contact page.
+
+Include:
+
+- Phone
+- WhatsApp
+- Email
+- Address
+- Google Maps location
+- Opening hours
+- Contact form
+
+Contact form:
+
+- Name
+- Phone
+- Email
+- Subject
+- Message
+
+Store submissions in Firestore.
+
+==================================================
+15. ADMIN DASHBOARD
+==================================================
+
+Create a completely separate secure admin dashboard.
+
+Route:
+
+/admin
+
+Admin login:
+
+/admin/login
+
+IMPORTANT:
+
+Only authenticated and authorized admin users can access the admin dashboard.
+
+Never rely only on hiding routes.
+
+Enforce authorization using:
+
+- Firebase Authentication
+- Firestore Security Rules
+- Admin role/claims or secure role document
+
+==================================================
+16. ADMIN DASHBOARD OVERVIEW
+==================================================
+
+Dashboard should show:
+
+Total Vehicles
+
+Available Vehicles
+
+Reserved Vehicles
+
+Sold Vehicles
+
+New Inquiries
+
+Pending Test Drives
+
+Trade-In Requests
+
+Unread/Unprocessed Contact Messages
+
+Recent Activity
+
+Recent Inquiries
+
+Recent Vehicle Additions
+
+Create a clean analytics dashboard.
+
+Use lightweight charts only where useful.
+
+Avoid unnecessary animations.
+
+==================================================
+17. VEHICLE MANAGEMENT
+==================================================
+
+Admin should be able to:
+
+Create vehicle
+
+Edit vehicle
+
+Delete/archive vehicle
+
+Change vehicle status
+
+Mark as featured
+
+Mark as new
+
+Mark as pre-owned
+
+Upload multiple images
+
+Reorder images
+
+Set primary image
+
+Manage vehicle specifications
+
+Manage features
+
+Manage price
+
+Manage description
+
+Manage stock ID
+
+Manage location
+
+Manage availability
+
+--------------------------------------------------
+
+Vehicle data model should support:
+
+id
+stockId
+make
+model
+variant
+year
+price
+currency
+mileage
+fuelType
+transmission
+bodyType
+engine
+color
+condition
+registrationStatus
+description
+features[]
+images[]
+primaryImage
+location
+vehicleType
+status
+featured
+createdAt
+updatedAt
+createdBy
+updatedBy
+
+Use Firestore timestamps.
+
+Do not use inconsistent date strings.
+
+==================================================
+18. IMAGE MANAGEMENT
+==================================================
+
+Use Firebase Storage.
+
+Admin can upload:
+
+- Vehicle images
+- Business images
+- Hero images
+- Other website media
+
+Requirements:
+
+- Validate file type
+- Validate file size
+- Prevent dangerous file types
+- Compress/optimize where practical
+- Generate appropriate image URLs
+- Use responsive image loading
+- Lazy-load non-critical images
+- Do not load original huge images unnecessarily
+
+Vehicle gallery should support multiple images.
+
+==================================================
+19. INQUIRY MANAGEMENT
+==================================================
+
+Admin dashboard should have:
+
+/admin/inquiries
+
+Display:
+
+- Customer name
+- Phone
+- Vehicle
+- Date
+- Status
+- Source
+- Assigned staff
+- Last contact
+
+Actions:
+
+- View
+- Update status
+- Add notes
+- Add follow-up date
+- Mark contacted
+- Close
+- Delete/archive
+
+Create inquiry detail page.
+
+Admin should be able to maintain internal notes.
+
+IMPORTANT:
+
+Customer must never see internal admin notes.
+
+==================================================
+20. TEST DRIVE MANAGEMENT
+==================================================
+
+Admin page:
+
+/admin/test-drives
+
+Features:
+
+- View requests
+- Filter by status
+- Filter by date
+- View customer
+- View vehicle
+- Confirm
+- Cancel
+- Mark completed
+- Add internal notes
+
+==================================================
+21. TRADE-IN MANAGEMENT
+==================================================
+
+Admin page:
+
+/admin/trade-ins
+
+Display:
+
+- Customer
+- Current vehicle
+- Submitted date
+- Status
+
+Admin can:
+
+- View uploaded images
+- Add valuation notes
+- Update status
+- Add estimated valuation
+- Add internal notes
+- Contact customer
+
+==================================================
+22. CUSTOMER/LEAD MANAGEMENT
+==================================================
+
+Create a lightweight CRM.
+
+Do NOT build an unnecessarily complex CRM.
+
+Admin should be able to see:
+
+Customer name
+Phone
+Email
+WhatsApp
+Interested vehicles
+Inquiry history
+Test drive history
+Trade-in requests
+Notes
+Last contact
+Status
+
+Customer statuses:
+
+- New
+- Active
+- Interested
+- Converted
+- Lost
+
+==================================================
+23. ADMIN SEARCH & FILTERING
+==================================================
+
+Every major admin list should support:
+
+- Search
+- Filter
+- Sort
+- Pagination
+
+Especially:
+
+Vehicles
+Inquiries
+Test drives
+Trade-ins
+Customers
+
+Do not fetch the entire Firestore collection unnecessarily.
+
+Use Firestore indexes where required.
+
+==================================================
+24. ADMIN SETTINGS
+==================================================
+
+Create:
+
+/admin/settings
+
+Admin should be able to configure:
+
+Business name
+
+Business description
+
+Phone
+
+WhatsApp
+
+Email
+
+Address
+
+Google Maps URL
+
+Opening hours
+
+Social media links
+
+Currency
+
+Website contact information
+
+Hero content
+
+Basic SEO information
+
+Featured vehicle selection
+
+==================================================
+25. SOCIAL MEDIA
+==================================================
+
+Support links for:
+
+Facebook
+Instagram
+TikTok
+WhatsApp
+YouTube
+
+Do not hardcode these throughout the application.
+
+Store them in the settings collection.
+
+==================================================
+26. FIREBASE DATABASE DESIGN
+==================================================
+
+Use Firestore collections such as:
+
+vehicles
+inquiries
+testDrives
+tradeIns
+customers
+contactMessages
+admins
+settings
+activityLogs
+
+Possible structure:
+
+/vehicles/{vehicleId}
+
+/inquiries/{inquiryId}
+
+/testDrives/{testDriveId}
+
+/tradeIns/{tradeInId}
+
+/customers/{customerId}
+
+/contactMessages/{messageId}
+
+/admins/{uid}
+
+/settings/{documentId}
+
+/activityLogs/{logId}
+
+Use subcollections only when they provide a real benefit.
+
+Avoid unnecessary deeply nested Firestore structures.
+
+==================================================
+27. FIRESTORE SECURITY
+==================================================
+
+Security is extremely important.
+
+Implement strict Firestore Security Rules.
+
+Public users:
+
+Can READ only published/available vehicle information.
+
+Public users:
+
+Can CREATE:
+
+- inquiries
+- test drive requests
+- trade-in requests
+- contact messages
+
+Public users must NOT:
+
+- Read customer records
+- Read inquiries
+- Read trade-ins
+- Read contact messages
+- Read admin records
+- Modify vehicles
+- Delete vehicles
+- Modify settings
+- Modify other customers' data
+
+Admin users:
+
+Can access protected collections according to role.
+
+Do not use:
+
+allow read, write: if true;
+
+Do not use insecure development rules in production.
+
+==================================================
+28. FIREBASE AUTHENTICATION
+==================================================
+
+Admin authentication only.
+
+Recommended:
+
+Firebase Email/Password Authentication.
+
+Do NOT require customer registration for the public website.
+
+Admin authentication must support:
+
+- Login
+- Logout
+- Password reset
+- Session persistence
+- Unauthorized route protection
+
+Never store passwords manually in Firestore.
+
+==================================================
+29. ADMIN AUTHORIZATION
+==================================================
+
+Implement role-based authorization.
+
+Roles:
+
+super_admin
+admin
+sales
+
+Permissions can be expanded later.
+
+Example:
+
+super_admin:
+- Everything
+
+admin:
+- Vehicles
+- Leads
+- Test drives
+- Trade-ins
+- Settings
+
+sales:
+- Vehicles read
+- Inquiries
+- Test drives
+- Customers
+
+Do not trust a role value sent from the client.
+
+Validate authorization securely.
+
+Prefer Firebase custom claims or a securely protected admin role mechanism.
+
+==================================================
+30. SECURITY REQUIREMENTS
+==================================================
+
+Follow secure coding practices.
+
+Never commit:
+
+- Firebase private keys
+- Service account JSON
+- API secrets
+- Passwords
+- Tokens
+- Private credentials
+
+Use environment variables.
+
+Example:
+
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+
+IMPORTANT:
+
+Understand that Firebase web configuration values are not equivalent to server secrets.
+
+Security must come from:
+
+- Firebase Security Rules
+- Authentication
+- Authorization
+- Validation
+- App Check where appropriate
+- Server-side privileged operations where necessary
+
+==================================================
+31. INPUT VALIDATION
+==================================================
+
+Use a validation library such as Zod.
+
+Validate every public form.
+
+Validate:
+
+- Name
+- Phone
+- Email
+- Price
+- Year
+- Mileage
+- Vehicle IDs
+- Status values
+- File types
+- File sizes
+- URLs
+
+Never trust client-side validation alone.
+
+Sanitize user-controlled data before rendering where necessary.
+
+Prevent:
+
+- XSS
+- Injection
+- Malicious file uploads
+- Invalid Firestore writes
+- Oversized payloads
+
+==================================================
+32. SPAM PROTECTION
+==================================================
+
+Public inquiry forms can be abused.
+
+Implement reasonable anti-spam protection.
+
+Consider:
+
+- Firebase App Check
+- Rate limiting strategy
+- Honeypot fields
+- Request throttling
+- Validation
+- Duplicate submission prevention
+
+Do not create a system that can easily be abused to generate unlimited Firestore writes.
+
+==================================================
+33. PERFORMANCE
+==================================================
+
+Performance is a major requirement.
+
+Target:
+
+Excellent Lighthouse performance.
+
+Use:
+
+- Next.js Image optimization
+- Lazy loading
+- Code splitting
+- Dynamic imports where useful
+- Pagination
+- Efficient Firestore queries
+- Firestore indexes
+- Avoid unnecessary listeners
+- Avoid fetching unused fields where possible
+- Debounced search
+- Skeleton loading
+- Optimized images
+- Responsive images
+- Caching where appropriate
+
+Do not create real-time Firestore listeners for every page.
+
+Use real-time listeners only where they provide meaningful value, mainly admin areas where useful.
+
+Public inventory should not unnecessarily maintain real-time connections.
+
+==================================================
+34. SEO
+==================================================
+
+This is a dealership website, so SEO is important.
+
+Implement:
+
+- Metadata
+- Open Graph
+- Twitter/X metadata
+- Canonical URLs
+- Sitemap
+- Robots.txt
+- Semantic HTML
+- Proper heading hierarchy
+- Alt text
+- SEO-friendly vehicle URLs
+
+Example:
+
+/inventory/toyota-premio-2022
+
+or
+
+/inventory/[vehicle-slug]
+
+Create structured data where appropriate:
+
+- AutomotiveBusiness
+- Vehicle
+- LocalBusiness
+
+Do not invent business information.
+
+Use actual configured business information from settings.
+
+==================================================
+35. VEHICLE SEO
+==================================================
+
+Each vehicle page should have unique metadata.
+
+Example:
+
+Title:
+
+"Toyota Premio 2022 | Hansagiri Auto Traders"
+
+Description should dynamically use:
+
+- Vehicle name
+- Year
+- Price
+- Key specifications
+
+Use vehicle images for Open Graph where possible.
+
+==================================================
+36. WHATSAPP INTEGRATION
+==================================================
+
+Add WhatsApp CTA.
+
+Example:
+
+"Hi Hansagiri Auto Traders, I'm interested in the Toyota Premio 2022 (Stock ID: HT-001)."
+
+Generate the message dynamically.
+
+Do not expose private APIs.
+
+Use a configurable WhatsApp number from admin settings.
+
+==================================================
+37. PHONE CONTACT
+==================================================
+
+On mobile:
+
+Use:
+
+tel:
+
+for phone numbers.
+
+WhatsApp:
+
+Use:
+
+wa.me
+
+Do not hardcode phone numbers throughout the application.
+
+==================================================
+38. NOTIFICATION ARCHITECTURE
+==================================================
+
+When a new:
+
+- Inquiry
+- Test Drive request
+- Trade-In request
+- Contact message
+
+is submitted:
+
+Store it in Firestore.
+
+Design the architecture so notifications can later be added through:
+
+- Email
+- WhatsApp
+- SMS
+
+Do not build unnecessary third-party integrations now unless required.
+
+Keep notification service modular.
+
+==================================================
+39. ERROR HANDLING
+==================================================
+
+Create professional error handling.
+
+Handle:
+
+- Firebase unavailable
+- Network failure
+- Permission denied
+- Invalid form
+- Missing vehicle
+- Deleted vehicle
+- Image upload failure
+- Authentication errors
+
+Show user-friendly messages.
+
+Do not expose:
+
+- Firebase internal errors
+- Stack traces
+- Database details
+- Sensitive information
+
+==================================================
+40. LOADING STATES
+==================================================
+
+Every asynchronous page must have proper loading states.
+
+Use:
+
+- Skeleton loaders
+- Button loading states
+- Image placeholders
+- Empty states
+
+Avoid blank white screens.
+
+==================================================
+41. EMPTY STATES
+==================================================
+
+Examples:
+
+No vehicles found:
+
+"No vehicles match your search."
+
+No inquiries:
+
+"No customer inquiries yet."
+
+No test drives:
+
+"No test drive requests yet."
+
+Make empty states visually consistent.
+
+==================================================
+42. ADMIN UX
+==================================================
+
+Admin dashboard should be extremely easy for a non-technical dealership employee to use.
+
+Sidebar:
+
+Dashboard
+
+Vehicles
+
+Inquiries
+
+Customers
+
+Test Drives
+
+Trade-Ins
+
+Messages
+
+Media
+
+Settings
+
+Logout
+
+On mobile:
+
+Use responsive sidebar/drawer.
+
+Admin UI should use:
+
+- Tables
+- Filters
+- Status badges
+- Search
+- Pagination
+- Modal/dialog
+- Confirmation dialogs
+- Toast notifications
+
+Avoid legacy-looking HTML controls.
+
+Create modern custom select/dropdown components.
+
+==================================================
+43. VEHICLE STATUS SYSTEM
+==================================================
+
+Use:
+
+available
+reserved
+sold
+draft
+archived
+
+Public inventory should normally show:
+
+available
+
+Optionally show:
+
+reserved
+
+Sold vehicles should be configurable:
+
+- Hide from public
+OR
+- Show as "Sold"
+
+Admin can control this through settings.
+
+==================================================
+44. FEATURED VEHICLES
+==================================================
+
+Admin can mark vehicles as:
+
+featured = true
+
+Home page should display featured vehicles.
+
+Limit the number displayed.
+
+Do not fetch hundreds of vehicles just to show 6 featured vehicles.
+
+==================================================
+45. DRAFT VEHICLES
+==================================================
+
+Admin should be able to create a vehicle as:
+
+Draft
+
+and publish it later.
+
+Draft vehicles must NEVER be publicly visible.
+
+==================================================
+46. AUDIT LOG
+==================================================
+
+For important admin actions create activity logs.
+
+Examples:
+
+Vehicle created
+Vehicle updated
+Vehicle marked sold
+Vehicle deleted
+Inquiry status changed
+Test drive confirmed
+Settings updated
+
+Store:
+
+userId
+action
+entityType
+entityId
+timestamp
+
+Do not store unnecessary sensitive information.
+
+==================================================
+47. ACCESSIBILITY
+==================================================
+
+Follow accessibility best practices.
+
+Implement:
+
+- Keyboard navigation
+- Proper labels
+- ARIA where required
+- Focus states
+- Sufficient contrast
+- Alt text
+- Accessible dialogs
+- Accessible dropdowns
+
+Do not rely only on color to communicate status.
+
+==================================================
+48. RESPONSIVE DESIGN
+==================================================
+
+Desktop:
+
+Premium wide layout.
+
+Tablet:
+
+Adaptive layout.
+
+Mobile:
+
+Excellent mobile experience.
+
+Important mobile actions:
+
+Call
+
+WhatsApp
+
+View Vehicle
+
+Send Inquiry
+
+Book Test Drive
+
+These should be easy to access.
+
+Create a mobile sticky CTA where appropriate on vehicle detail pages.
+
+==================================================
+49. UI COMPONENT SYSTEM
+==================================================
+
+Create reusable components.
+
+Examples:
+
+Navbar
+Footer
+VehicleCard
+VehicleGrid
+VehicleGallery
+VehicleSpecs
+VehicleFilters
+SearchBar
+CTASection
+ContactForm
+InquiryForm
+TestDriveForm
+TradeInForm
+AdminSidebar
+AdminHeader
+DataTable
+StatusBadge
+ConfirmDialog
+FileUploader
+ImageUploader
+Modal
+Toast
+LoadingSkeleton
+EmptyState
+Pagination
+
+Do not duplicate components.
+
+==================================================
+50. NAVIGATION
+==================================================
+
+Public navigation:
+
+Home
+Inventory
+About Us
+Services
+Trade-In
+Financing
+Contact
+
+Primary CTA:
+
+"Browse Vehicles"
+
+Admin navigation should be completely separate.
+
+==================================================
+51. HEADER DESIGN
+==================================================
+
+Header should be premium.
+
+Desktop:
+
+Logo on left.
+
+Navigation center/right.
+
+CTA:
+
+"Browse Vehicles"
+
+Contact/WhatsApp option.
+
+Mobile:
+
+Logo
+Menu button
+
+Use transparent/dark header over hero where appropriate.
+
+On normal pages use solid dark header.
+
+==================================================
+52. FOOTER
+==================================================
+
+Footer should include:
+
+Hansagiri Auto Traders logo
+
+Short description
+
+Quick links
+
+Inventory
+
+Services
+
+Contact
+
+Phone
+
+WhatsApp
+
+Email
+
+Address
+
+Social media
+
+Copyright
+
+Privacy Policy
+
+Terms
+
+==================================================
+53. LEGAL PAGES
+==================================================
+
+Create:
+
+/privacy-policy
+
+/terms
+
+These should be professional templates.
+
+Do not invent legally binding claims.
+
+Keep business-specific legal details configurable where practical.
+
+==================================================
+54. DATABASE INDEXING
+==================================================
+
+Plan Firestore indexes for common queries.
+
+Examples:
+
+vehicles:
+
+status + createdAt
+status + featured
+status + price
+status + year
+vehicleType + status
+make + status
+
+inquiries:
+
+status + createdAt
+vehicleId + createdAt
+
+testDrives:
+
+status + preferredDate
+
+tradeIns:
+
+status + createdAt
+
+Only create indexes actually required by Firestore queries.
+
+==================================================
+55. FIREBASE STORAGE SECURITY
+==================================================
+
+Storage rules must prevent unauthorized uploads.
+
+Public users should only upload files through controlled trade-in functionality.
+
+Admin users can upload vehicle/media images.
+
+Validate:
+
+- file size
+- content type
+- authenticated user where required
+
+Do not allow arbitrary executable files.
+
+==================================================
+56. FIREBASE APP CHECK
+==================================================
+
+Prepare the application for Firebase App Check.
+
+Use it where appropriate to protect public Firebase resources.
+
+Do not make the entire website unusable if App Check configuration is not yet available during local development.
+
+Clearly separate development and production configuration.
+
+==================================================
+57. ENVIRONMENT CONFIGURATION
+==================================================
+
+Create:
+
+.env.local
+
+.example.env
+
+Never commit .env.local.
+
+Add appropriate entries to .gitignore.
+
+Document required environment variables in README.
+
+==================================================
+58. DEVELOPMENT ENVIRONMENT
+==================================================
+
+Provide:
+
+README.md
+
+with:
+
+- Project setup
+- Node version
+- Installation
+- Firebase setup
+- Environment variables
+- Firestore setup
+- Storage setup
+- Authentication setup
+- Security rules deployment
+- Firestore indexes
+- Local development
+- Production deployment
+- Admin user creation
+
+==================================================
+59. FIREBASE SETUP DOCUMENTATION
+==================================================
+
+Document exactly how to configure:
+
+Firebase project
+
+Authentication
+
+Firestore
+
+Storage
+
+Security Rules
+
+Indexes
+
+App Check
+
+Admin roles
+
+Production configuration
+
+==================================================
+60. DEMO DATA
+==================================================
+
+Create realistic seed/demo vehicle data ONLY for development.
+
+Do not use fake demo data in production automatically.
+
+Clearly separate:
+
+development data
+
+production data
+
+==================================================
+61. SEO-FRIENDLY CONTENT
+==================================================
+
+Use professional copywriting.
+
+Brand voice:
+
+Professional
+Confident
+Trustworthy
+Premium
+Straightforward
+
+Avoid exaggerated claims such as:
+
+"Best car dealer in Sri Lanka"
+
+unless the business specifically provides evidence.
+
+Prefer:
+
+"Quality vehicles. Transparent deals. Confident driving."
+
+==================================================
+62. ANIMATIONS
+==================================================
+
+Use subtle modern animations.
+
+Examples:
+
+- Fade
+- Slide
+- Hover
+- Image transitions
+
+Keep animations fast.
+
+Respect:
+
+prefers-reduced-motion
+
+Do NOT create excessive animation.
+
+==================================================
+63. DESIGN DETAILS
+==================================================
+
+The website should visually resemble a premium modern automotive brand.
+
+Use:
+
+- Large vehicle photography
+- Dark sections
+- Gold accent lines
+- Gold buttons
+- Premium typography
+- Strong visual hierarchy
+- Large whitespace
+- Clean cards
+- Subtle borders
+- Soft shadows
+- High-quality vehicle images
+
+Use gold carefully.
+
+Example:
+
+Black background
+White text
+Gold CTA
+Gold divider
+White content section
+
+Avoid making every element gold.
+
+==================================================
+64. BUTTON DESIGN
+==================================================
+
+Primary button:
+
+Gold background
+Dark/black text
+
+Secondary:
+
+Transparent / dark
+Gold border
+White or gold text
+
+Buttons should have:
+
+- hover
+- focus
+- disabled
+- loading
+
+states.
+
+==================================================
+65. FORMS
+==================================================
+
+Forms must look modern.
+
+Do NOT use default browser:
+
+<select>
+<input>
+<button>
+
+styling.
+
+Use polished custom components.
+
+However, preserve accessibility and keyboard functionality.
+
+Use:
+
+- labels
+- placeholders
+- validation messages
+- loading state
+- success state
+- error state
+
+==================================================
+66. SECURITY REVIEW BEFORE COMPLETION
+==================================================
+
+Before declaring the application complete, perform a security review.
+
+Check:
+
+- No secrets in Git
+- No exposed service account credentials
+- Firestore rules
+- Storage rules
+- Admin route protection
+- Authorization
+- Input validation
+- File upload security
+- XSS risks
+- Open redirects
+- Unsafe URLs
+- API exposure
+- Rate limiting / abuse protection
+- Error leakage
+- Sensitive information exposure
+- Admin-only data visibility
+
+Create:
+
+SECURITY.md
+
+with a security checklist.
+
+==================================================
+67. PERFORMANCE REVIEW BEFORE COMPLETION
+==================================================
+
+Check:
+
+- Image sizes
+- Bundle size
+- Unnecessary dependencies
+- Firestore reads
+- Real-time listeners
+- API calls
+- Rendering
+- Mobile performance
+- Lighthouse performance
+- Caching
+- Lazy loading
+
+Avoid unnecessary Firebase reads.
+
+==================================================
+68. FIRESTORE COST OPTIMIZATION
+==================================================
+
+This application may be used by a small/medium dealership.
+
+Keep Firebase costs low.
+
+IMPORTANT:
+
+Do not:
+
+- Continuously listen to large collections
+- Fetch all vehicles unnecessarily
+- Re-read the same data repeatedly
+- Store duplicate large objects
+- Store vehicle images inside Firestore
+
+Images belong in Firebase Storage.
+
+Firestore should store metadata and image URLs.
+
+Use pagination.
+
+==================================================
+69. FUTURE EXTENSIBILITY
+==================================================
+
+Architecture should allow future additions such as:
+
+- SMS notifications
+- WhatsApp automation
+- Email notifications
+- Payment integration
+- Vehicle comparison
+- Customer accounts
+- Sales management
+- Staff management
+- Finance tracking
+- Appointment calendar
+- Advanced analytics
+
+But DO NOT implement these unless required now.
+
+Build a clean foundation.
+
+==================================================
+70. IMPORTANT BUSINESS WORKFLOW
+==================================================
+
+The core business workflow is:
+
+Admin adds vehicle
+        ↓
+Vehicle saved as Draft
+        ↓
+Admin publishes vehicle
+        ↓
+Vehicle appears on website
+        ↓
+Customer views vehicle
+        ↓
+Customer sends inquiry / WhatsApp / calls
+        ↓
+Inquiry stored in Firestore
+        ↓
+Admin receives/opens inquiry
+        ↓
+Admin contacts customer
+        ↓
+Customer books test drive
+        ↓
+Admin confirms test drive
+        ↓
+Vehicle is sold
+        ↓
+Admin changes vehicle status to Sold
+        ↓
+Vehicle disappears from available inventory
+
+This workflow must be simple and reliable.
+
+==================================================
+71. CUSTOMER EXPERIENCE
+==================================================
+
+A customer should be able to:
+
+1. Open website
+2. Browse vehicles
+3. Search/filter
+4. Open vehicle
+5. See images/specifications
+6. Click WhatsApp
+7. Call dealer
+8. Send inquiry
+9. Request test drive
+10. Submit trade-in
+
+WITHOUT creating an account.
+
+This is a core requirement.
+
+==================================================
+72. ADMIN EXPERIENCE
+==================================================
+
+Admin should be able to:
+
+1. Login
+2. See dashboard
+3. Add vehicle
+4. Upload images
+5. Publish vehicle
+6. Edit vehicle
+7. Mark vehicle sold
+8. View inquiries
+9. Contact customers
+10. Manage test drives
+11. Manage trade-ins
+12. Manage customers
+13. Update business information
+
+The system should be simple enough for a non-technical dealership employee.
+
+==================================================
+73. DO NOT OVERENGINEER
+==================================================
+
+This is very important.
+
+Do not add unnecessary:
+
+- Microservices
+- Complex backend
+- Redis
+- Kubernetes
+- SQL
+- GraphQL
+- Multiple state management libraries
+- Excessive dependencies
+
+Keep the architecture:
+
+Next.js
++
+Firebase
++
+Firestore
++
+Firebase Storage
++
+Firebase Auth
+
+Simple, secure, scalable.
+
+==================================================
+74. CODE QUALITY
+==================================================
+
+Follow:
+
+- SOLID principles where appropriate
+- DRY
+- Clean architecture
+- Strong TypeScript typing
+- Reusable components
+- Small functions
+- Clear naming
+- Error handling
+- Proper comments only where useful
+
+Avoid over-commenting obvious code.
+
+==================================================
+75. FINAL DEVELOPMENT PROCESS
+==================================================
+
+Do NOT immediately create random files.
+
+First:
+
+1. Analyze requirements.
+2. Create architecture.
+3. Define database schema.
+4. Define TypeScript models.
+5. Define Firebase service layer.
+6. Define security model.
+7. Define public routes.
+8. Define admin routes.
+9. Define component architecture.
+10. Define design system.
+
+Then implement.
+
+Recommended implementation order:
+
+PHASE 1
+Project setup
+Design system
+Firebase configuration
+
+PHASE 2
+Public layout
+Navbar
+Footer
+Home page
+
+PHASE 3
+Vehicle inventory
+Vehicle cards
+Search
+Filters
+Vehicle details
+
+PHASE 4
+Inquiry system
+Test drive
+Trade-in
+Contact
+
+PHASE 5
+Firebase Authentication
+Admin authentication
+Admin layout
+
+PHASE 6
+Vehicle management
+
+PHASE 7
+Inquiry/CRM management
+
+PHASE 8
+Test drive management
+
+PHASE 9
+Trade-in management
+
+PHASE 10
+Settings
+Media
+Activity logs
+
+PHASE 11
+Security hardening
+
+PHASE 12
+Performance optimization
+
+PHASE 13
+SEO
+
+PHASE 14
+Testing
+
+==================================================
+76. TESTING
+==================================================
+
+Implement appropriate tests for critical functionality.
+
+Test:
+
+- Vehicle creation
+- Vehicle editing
+- Vehicle publishing
+- Vehicle filtering
+- Inquiry submission
+- Test drive submission
+- Trade-in submission
+- Admin login
+- Admin authorization
+- Firestore permissions
+- Storage permissions
+
+Also test:
+
+- Mobile
+- Desktop
+- Slow network
+- Empty states
+- Error states
+
+==================================================
+77. PRODUCTION READINESS
+==================================================
+
+Before considering the project complete, verify:
+
+[ ] Responsive design
+[ ] Modern UI
+[ ] Logo correctly implemented
+[ ] Public inventory
+[ ] Vehicle details
+[ ] Inquiry system
+[ ] Test drive system
+[ ] Trade-in system
+[ ] Admin dashboard
+[ ] Admin authentication
+[ ] Role authorization
+[ ] Firestore rules
+[ ] Storage rules
+[ ] Input validation
+[ ] File upload security
+[ ] Spam protection
+[ ] SEO
+[ ] Sitemap
+[ ] Robots.txt
+[ ] Performance optimization
+[ ] Error handling
+[ ] Loading states
+[ ] Empty states
+[ ] Environment variables
+[ ] No secrets committed
+[ ] README
+[ ] SECURITY.md
+[ ] Firebase setup documentation
+
+==================================================
+78. IMPORTANT VISUAL REFERENCE
+==================================================
+
+Use the Hansagiri Auto Traders logo and Facebook cover image that I provided as the visual identity reference.
+
+Do not copy the Facebook cover layout directly.
+
+Instead extract the brand language:
+
+- Gold automotive silhouette
+- Black premium background
+- Metallic gold typography
+- Elegant automotive styling
+
+Translate that into a modern responsive web design.
+
+The website should look like a premium dealership website, not a generic CRUD application.
+
+The ADMIN DASHBOARD can have a more functional UI, but it should still follow the same brand identity.
+
+==================================================
+79. STARTING POINT
+==================================================
+
+Before coding:
+
+Create a concise implementation plan and show:
+
+1. Project architecture
+2. Page structure
+3. Component structure
+4. Firestore schema
+5. Firebase security architecture
+6. Admin role architecture
+7. Design system
+8. Development phases
+
+Then start implementing the application.
+
+Do not ask unnecessary questions.
+
+Where business-specific information is missing, create configurable placeholders in the admin settings rather than inventing real business information.
+
+Use the provided Hansagiri Auto Traders logo as the main branding asset.
+
+The final result must be production-oriented, modern, secure, responsive, performant, SEO-friendly, and easy for a dealership to operate.

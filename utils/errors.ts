@@ -1,0 +1,40 @@
+export class AppError extends Error {
+  readonly code: string;
+
+  constructor(message: string, code = "app_error") {
+    super(message);
+    this.name = "AppError";
+    this.code = code;
+  }
+}
+
+export function toUserMessage(error: unknown): string {
+  if (error instanceof AppError) return error.message;
+
+  if (typeof error === "object" && error && "code" in error) {
+    const code = String((error as { code: string }).code);
+    if (code === "permission-denied") {
+      return "You do not have permission to complete this action.";
+    }
+    if (code === "unavailable" || code === "network-request-failed") {
+      return "We could not reach the server. Please check your connection and try again.";
+    }
+    if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+      return "Invalid email or password.";
+    }
+    if (code === "auth/user-not-found") {
+      return "No account found for this email.";
+    }
+    if (code === "auth/too-many-requests") {
+      return "Too many attempts. Please wait a moment and try again.";
+    }
+    if (code === "auth/email-already-in-use") {
+      return "This email is already in use.";
+    }
+    if (code === "storage/unauthorized") {
+      return "Upload was not authorised. Please sign in and try again.";
+    }
+  }
+
+  return "Something went wrong. Please try again.";
+}
