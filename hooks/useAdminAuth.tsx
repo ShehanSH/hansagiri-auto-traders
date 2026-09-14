@@ -24,17 +24,29 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      return subscribeAuth((_user, record) => {
-        setAdmin(record);
+    let unsubscribe = () => undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const { ensureFirebaseConfigured } = await import("@/lib/env");
+      await ensureFirebaseConfigured();
+      if (cancelled) return;
+      try {
+        unsubscribe = subscribeAuth((_user, record) => {
+          setAdmin(record);
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error("Admin auth failed to start", error);
+        setAdmin(null);
         setLoading(false);
-      });
-    } catch (error) {
-      console.error("Admin auth failed to start", error);
-      setAdmin(null);
-      setLoading(false);
-      return () => undefined;
-    }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo<AuthState>(

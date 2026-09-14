@@ -11,7 +11,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { getFirebaseAuth, getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode, isFirebaseConfigured } from "@/lib/env";
+import { ensureFirebaseConfigured, isDemoAuth, isFirebaseConfigured } from "@/lib/env";
 import { AppError } from "@/utils/errors";
 import type { AdminRole, AdminUser } from "@/types";
 
@@ -35,7 +35,7 @@ function clearSessionCookie() {
 }
 
 export async function getAdminRecord(uid: string): Promise<AdminUser | null> {
-  if (isDemoMode()) return demoStore.demoUser;
+  if (isDemoAuth()) return demoStore.demoUser;
   try {
     const snapshot = await getDoc(doc(getDb(), COLLECTIONS.admins, uid));
     if (!snapshot.exists()) return null;
@@ -49,7 +49,9 @@ export async function getAdminRecord(uid: string): Promise<AdminUser | null> {
 }
 
 export async function loginAdmin(email: string, password: string): Promise<AdminUser> {
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+
+  if (isDemoAuth()) {
     if (email === "admin@local.dev" && password === "hansagiri-admin") {
       setSessionCookie("demo");
       return demoStore.demoUser;
@@ -71,7 +73,8 @@ export async function loginAdmin(email: string, password: string): Promise<Admin
 }
 
 export async function getAdminIdToken(): Promise<string | null> {
-  if (isDemoMode()) return null;
+  if (isDemoAuth()) return null;
+  if (!isFirebaseConfigured()) return null;
   const user = getFirebaseAuth().currentUser;
   if (!user) return null;
   return user.getIdToken();
@@ -79,16 +82,13 @@ export async function getAdminIdToken(): Promise<string | null> {
 
 export async function logoutAdmin(): Promise<void> {
   clearSessionCookie();
-  if (!isDemoMode() && isFirebaseConfigured()) {
+  if (!isDemoAuth() && isFirebaseConfigured()) {
     await signOut(getFirebaseAuth());
   }
 }
 
 export async function resetAdminPassword(email: string): Promise<void> {
-  if (isDemoMode()) {
-    throw new AppError("Password reset is only available on the production Firebase project.", "demo");
-  }
-
+  await ensureFirebaseConfigured();
   assertFirebaseReady();
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -105,11 +105,13 @@ export async function resetAdminPassword(email: string): Promise<void> {
 }
 
 export async function readPasswordResetEmail(oobCode: string): Promise<string> {
+  await ensureFirebaseConfigured();
   assertFirebaseReady();
   return verifyPasswordResetCode(getFirebaseAuth(), oobCode);
 }
 
 export async function completeAdminPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+  await ensureFirebaseConfigured();
   assertFirebaseReady();
   await confirmPasswordReset(getFirebaseAuth(), oobCode, newPassword);
 }
@@ -117,7 +119,7 @@ export async function completeAdminPasswordReset(oobCode: string, newPassword: s
 export function subscribeAuth(
   callback: (user: User | null, admin: AdminUser | null) => void,
 ): () => void {
-  if (isDemoMode()) {
+  if (isDemoAuth()) {
     const hasSession =
       typeof document !== "undefined" && document.cookie.includes(`${SESSION_COOKIE}=`);
     callback(null, hasSession ? demoStore.demoUser : null);
