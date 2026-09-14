@@ -23,12 +23,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Demo admin login (local demo mode only):
-
-- Email: `admin@local.dev`
-- Password: `hansagiri-admin`
-
-Demo mode is enabled when `NEXT_PUBLIC_USE_DEMO_DATA=true` or when Firebase keys are missing. It is for development only. Do not use demo login in production.
+Local demo login exists only when `NEXT_PUBLIC_USE_DEMO_DATA=true` on your machine. Do not enable demo mode in Vercel.
 
 ## Environment variables
 

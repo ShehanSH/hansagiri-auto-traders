@@ -4,9 +4,11 @@ This checklist is for Hansagiri Auto Traders before production.
 
 ## Secrets
 
-- [ ] `.env.local` is not committed
-- [ ] No Firebase service account JSON in the repo
-- [ ] No passwords, tokens, or private keys in source
+- [x] `.env.local` is not committed
+- [x] No Firebase service account JSON in the repo
+- [x] Firebase web config lives in environment variables only (never commit `apiKey` or tokens)
+- [x] Blob read/write token is server-only (`BLOB_READ_WRITE_TOKEN`)
+- [ ] Restrict the Firebase/Google Browser API key by HTTP referrer in Google Cloud
 - [ ] Demo admin credentials are disabled (`NEXT_PUBLIC_USE_DEMO_DATA=false`)
 
 ## Firebase
