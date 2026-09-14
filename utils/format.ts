@@ -47,15 +47,28 @@ export function formatDateTime(iso: string): string {
   }).format(date);
 }
 
+export function composeVehicleName(vehicle: {
+  year?: number | string;
+  make?: string;
+  model?: string;
+  variant?: string;
+}): string {
+  const year = Number(vehicle.year);
+  return [Number.isFinite(year) && year > 1900 ? String(year) : "", vehicle.make, vehicle.model, vehicle.variant]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function vehicleTitle(vehicle: {
+  name?: string;
   year: number;
   make: string;
   model: string;
   variant?: string;
 }): string {
-  return [vehicle.year, vehicle.make, vehicle.model, vehicle.variant]
-    .filter(Boolean)
-    .join(" ");
+  if (vehicle.name?.trim()) return vehicle.name.trim();
+  return composeVehicleName(vehicle);
 }
 
 export function statusLabel(status: string): string {

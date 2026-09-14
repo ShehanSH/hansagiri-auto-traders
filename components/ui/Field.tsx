@@ -31,6 +31,7 @@ export function Input({
 export function Textarea({
   label,
   error,
+  hint,
   id,
   className = "",
   ...props
@@ -40,6 +41,7 @@ export function Textarea({
     <label className="block space-y-2" htmlFor={inputId}>
       <span className="text-xs uppercase tracking-[0.18em] text-gold-champagne/80">{label}</span>
       <textarea id={inputId} className={`${fieldClass} min-h-32 resize-y ${className}`} {...props} />
+      {hint ? <span className="block text-xs text-muted">{hint}</span> : null}
       {error ? <span className="block text-xs text-danger">{error}</span> : null}
     </label>
   );

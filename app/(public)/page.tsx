@@ -7,25 +7,14 @@ import { EmptyState } from "@/components/ui/Feedback";
 import { getSettings } from "@/lib/services/settings.server";
 import { getFeaturedVehicles } from "@/lib/services/vehicles";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { dealerJsonLd } from "@/lib/seo/jsonld";
 
 export default async function HomePage() {
   const [settings, featured] = await Promise.all([getSettings(), getFeaturedVehicles()]);
 
   return (
     <>
-      <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "AutomotiveBusiness",
-          name: settings.businessName,
-          description: settings.businessDescription,
-          telephone: settings.phone || undefined,
-          email: settings.email || undefined,
-          address: settings.address || undefined,
-          url: "https://hansagiriautotraders.example",
-          image: "/logonew.png",
-        }}
-      />
+      <JsonLd data={dealerJsonLd(settings)} />
       <Hero settings={settings} />
       <section className="bg-dark py-20">
         <div className="mx-auto max-w-7xl px-4 lg:px-8">

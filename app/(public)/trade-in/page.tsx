@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { TradeInForm } from "@/components/public/TradeInForm";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "Trade-In",
-  description: "Submit your current vehicle for a trade-in review with Hansagiri Auto Traders.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return marketingPageMetadata(
+    "/trade-in",
+    "Trade-In",
+    "Submit your current vehicle for a trade-in review with our team.",
+  );
+}
 
 export default function TradeInPage() {
   return (

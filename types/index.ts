@@ -112,6 +112,7 @@ export interface Vehicle {
   id: string;
   slug: string;
   stockId: string;
+  name: string;
   make: string;
   model: string;
   variant: string;
@@ -134,6 +135,8 @@ export interface Vehicle {
   vehicleType: VehicleType;
   status: VehicleStatus;
   featured: boolean;
+  seoTitle: string;
+  seoDescription: string;
   searchKeywords: string[];
   createdAt: string;
   updatedAt: string;

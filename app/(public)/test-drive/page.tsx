@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import { TestDriveForm } from "@/components/public/TestDriveForm";
 import { getVehicleById } from "@/lib/services/vehicles";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 import { vehicleTitle } from "@/utils/format";
 
-export const metadata: Metadata = {
-  title: "Book a Test Drive",
-  description: "Request a test drive. Appointments are confirmed by Hansagiri Auto Traders.",
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ vehicle?: string }>;
+}): Promise<Metadata> {
+  const { vehicle: vehicleId } = await searchParams;
+  const vehicle = vehicleId ? await getVehicleById(vehicleId) : null;
+  const title = vehicle ? `Test drive ${vehicleTitle(vehicle)}` : "Book a Test Drive";
+  const description = vehicle
+    ? `Request a test drive for the ${vehicleTitle(vehicle)}. Appointments are confirmed by the dealership.`
+    : "Request a test drive. Appointments are confirmed by the dealership.";
+  return marketingPageMetadata("/test-drive", title, description);
+}
 
 export default async function TestDrivePage({
   searchParams,

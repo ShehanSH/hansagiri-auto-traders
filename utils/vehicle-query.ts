@@ -26,6 +26,7 @@ export function matchesKeyword(vehicle: Vehicle, keyword: string): boolean {
   const q = keyword.trim().toLowerCase();
   if (!q) return true;
   const haystack = [
+    vehicle.name,
     vehicle.make,
     vehicle.model,
     vehicle.variant,

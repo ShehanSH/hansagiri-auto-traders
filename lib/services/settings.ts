@@ -10,10 +10,11 @@ import { getDb } from "@/lib/firebase/client";
 import { applyDemoSettings, getDemoSettingsMemory } from "@/lib/demo/settings-memory";
 import { demoStore } from "@/lib/demo/store";
 import { isDemoMode, isFirebaseConfigured } from "@/lib/env";
+import { buildSiteSeo } from "@/lib/seo/content";
 import type { SiteSettings } from "@/types";
 
 function withFallbacks(data: Partial<SiteSettings> | undefined): SiteSettings {
-  return {
+  const merged: SiteSettings = {
     ...DEFAULT_SETTINGS,
     privacyPolicy: DEFAULT_PRIVACY,
     terms: DEFAULT_TERMS,
@@ -22,6 +23,12 @@ function withFallbacks(data: Partial<SiteSettings> | undefined): SiteSettings {
       ? data.openingHours
       : DEFAULT_SETTINGS.openingHours,
     social: { ...DEFAULT_SETTINGS.social, ...data?.social },
+  };
+  const seo = buildSiteSeo(merged);
+  return {
+    ...merged,
+    seoTitle: merged.seoTitle.trim() || seo.title,
+    seoDescription: merged.seoDescription.trim() || seo.description,
   };
 }
 
@@ -57,21 +64,22 @@ export async function getSettings(): Promise<SiteSettings> {
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {
-  applyDemoSettings(settings);
+  const next = withFallbacks(settings);
+  applyDemoSettings(next);
 
   if (isDemoMode() && !isFirebaseConfigured()) {
     if (typeof window !== "undefined") {
-      await persistThroughApi(settings);
+      await persistThroughApi(next);
     }
     return;
   }
 
-  await setDoc(doc(getDb(), COLLECTIONS.settings, SETTINGS_DOC_ID), settings, {
+  await setDoc(doc(getDb(), COLLECTIONS.settings, SETTINGS_DOC_ID), next, {
     merge: true,
   });
   if (typeof window !== "undefined") {
     try {
-      await persistThroughApi(settings);
+      await persistThroughApi(next);
     } catch (error) {
       console.warn("Settings saved, but the public cache could not be refreshed", error);
     }

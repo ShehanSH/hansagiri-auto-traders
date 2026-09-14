@@ -69,7 +69,7 @@ export function VehicleGallery({
               }`}
               onClick={() => setIndex(imageIndex)}
             >
-              <Image src={image.url} alt="" fill className="object-cover" sizes="96px" />
+              <Image src={image.url} alt={image.alt || `${title} ${imageIndex + 1}`} fill className="object-cover" sizes="96px" />
             </button>
           ))}
         </div>

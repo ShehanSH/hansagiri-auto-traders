@@ -11,6 +11,8 @@ import { Phone } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/SocialIcons";
 import { getSettings } from "@/lib/services/settings.server";
 import { getVehicleBySlug } from "@/lib/services/vehicles";
+import { buildPageMetadata, resolveVehicleSeo } from "@/lib/seo/content";
+import { breadcrumbJsonLd, vehicleJsonLd } from "@/lib/seo/jsonld";
 import { formatPrice, vehicleTitle } from "@/utils/format";
 import { toTelHref } from "@/utils/phone";
 import { toWhatsAppHref, vehicleInterestMessage } from "@/utils/whatsapp";
@@ -19,19 +21,16 @@ type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const vehicle = await getVehicleBySlug(slug);
+  const [vehicle, settings] = await Promise.all([getVehicleBySlug(slug), getSettings()]);
   if (!vehicle) return { title: "Vehicle" };
-  const title = vehicleTitle(vehicle);
-  const description = `${title} · ${formatPrice(vehicle.price, vehicle.currency)} · ${vehicle.fuelType} · ${vehicle.transmission}`;
-  return {
-    title,
-    description,
-    openGraph: {
-      title: `${title} | Hansagiri Auto Traders`,
-      description,
-      images: vehicle.primaryImage ? [vehicle.primaryImage] : ["/cover.jpg"],
-    },
-  };
+  const seo = resolveVehicleSeo(vehicle, settings.businessName);
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: `/vehicles/${vehicle.slug}`,
+    image: vehicle.primaryImage || "/cover.jpg",
+    businessName: settings.businessName,
+  });
 }
 
 export default async function VehicleDetailPage({ params }: Props) {
@@ -52,30 +51,13 @@ export default async function VehicleDetailPage({ params }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 pb-28 lg:px-8 lg:pb-16">
+      <JsonLd data={vehicleJsonLd(vehicle, settings)} />
       <JsonLd
-        data={{
-          "@context": "https://schema.org",
-          "@type": "Car",
-          name: title,
-          brand: vehicle.make,
-          model: vehicle.model,
-          vehicleModelDate: String(vehicle.year),
-          mileageFromOdometer: {
-            "@type": "QuantitativeValue",
-            value: vehicle.mileage,
-            unitCode: "KMT",
-          },
-          offers: {
-            "@type": "Offer",
-            price: vehicle.price,
-            priceCurrency: vehicle.currency || settings.currency,
-            availability:
-              vehicle.status === "available"
-                ? "https://schema.org/InStock"
-                : "https://schema.org/SoldOut",
-          },
-          image: vehicle.images.map((item) => item.url),
-        }}
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Vehicles", path: "/vehicles" },
+          { name: title, path: `/vehicles/${vehicle.slug}` },
+        ])}
       />
       <p className="text-xs uppercase tracking-[0.2em] text-gold">
         <Link href="/vehicles">Vehicles</Link> / {vehicle.stockId}

@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { DEFAULT_PRIVACY } from "@/config/defaults";
 import { getSettings } from "@/lib/services/settings.server";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return marketingPageMetadata(
+    "/privacy-policy",
+    "Privacy Policy",
+    "How we collect and use information submitted through this website.",
+  );
+}
 
 export default async function PrivacyPage() {
   const settings = await getSettings();

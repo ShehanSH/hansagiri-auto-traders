@@ -2,12 +2,17 @@ import type { Metadata } from "next";
 import { ContactForm } from "@/components/public/ContactForm";
 import { ContactPreview } from "@/components/public/ContactPreview";
 import { getSettings } from "@/lib/services/settings.server";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 import { toMapsEmbedSrc } from "@/utils/maps";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: "Call, message, or visit Hansagiri Auto Traders.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return marketingPageMetadata(
+    "/contact",
+    "Contact",
+    `Call, message, or visit ${settings.businessName}${settings.address ? ` at ${settings.address}` : ""}.`,
+  );
+}
 
 export default async function ContactPage({
   searchParams,

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SERVICES } from "@/config/constants";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "Services",
-  description:
-    "Vehicle sales, sourcing, trade-in assistance, financing introductions, and test drives from Hansagiri Auto Traders.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return marketingPageMetadata(
+    "/services",
+    "Services",
+    "Vehicle sales, sourcing, trade-in assistance, financing introductions, and test drives.",
+  );
+}
 
 export default function ServicesPage() {
   return (

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { FinancingForm } from "@/components/public/ContactForm";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "Financing",
-  description:
+export async function generateMetadata(): Promise<Metadata> {
+  return marketingPageMetadata(
+    "/financing",
+    "Financing",
     "General financing information and an enquiry form. Final terms depend on institution and dealership approval.",
-};
+  );
+}
 
 export default function FinancingPage() {
   return (

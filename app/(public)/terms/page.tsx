@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { DEFAULT_TERMS } from "@/config/defaults";
 import { getSettings } from "@/lib/services/settings.server";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "Terms of Use",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return marketingPageMetadata(
+    "/terms",
+    "Terms of Use",
+    "Website terms for browsing vehicles and submitting enquiries.",
+  );
+}
 
 export default async function TermsPage() {
   const settings = await getSettings();

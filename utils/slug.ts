@@ -18,6 +18,7 @@ export function vehicleSlug(input: {
 }
 
 export function buildSearchKeywords(input: {
+  name?: string;
   make: string;
   model: string;
   variant: string;
@@ -25,6 +26,7 @@ export function buildSearchKeywords(input: {
   stockId: string;
 }): string[] {
   const parts = [
+    input.name,
     input.make,
     input.model,
     input.variant,

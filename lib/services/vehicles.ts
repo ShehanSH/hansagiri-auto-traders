@@ -11,15 +11,18 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { PAGE_SIZE } from "@/config/constants";
+import { BRAND_NAME, PAGE_SIZE } from "@/config/constants";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
 import { isDemoMode } from "@/lib/env";
 import { getSettings } from "@/lib/services/settings";
 import { nowIso } from "@/lib/firebase/timestamps";
+import { buildVehicleSeo } from "@/lib/seo/content";
 import { AppError } from "@/utils/errors";
+import { composeVehicleName } from "@/utils/format";
 import { buildSearchKeywords, vehicleSlug } from "@/utils/slug";
+import { nextStockId } from "@/utils/stock-id";
 import {
   filterVehicles,
   isPubliclyVisible,
@@ -48,11 +51,20 @@ function decorateVehicle(
   },
 ): Vehicle {
   const timestamp = nowIso();
-  const images = extras.images ?? [];
+  const name = input.name?.trim() || composeVehicleName(input);
+  const seo = buildVehicleSeo({ ...input, name }, BRAND_NAME);
+  const images = (extras.images ?? []).map((image, index) => {
+    const weakAlt = !image.alt?.trim() || /\.(jpe?g|png|webp|avif|gif)$/i.test(image.alt.trim());
+    return {
+      ...image,
+      alt: weakAlt ? `${name} photo ${index + 1}` : image.alt,
+    };
+  });
   return {
     id: extras.id ?? "",
     slug: vehicleSlug(input),
     stockId: input.stockId,
+    name,
     make: input.make,
     model: input.model,
     variant: input.variant ?? "",
@@ -75,7 +87,9 @@ function decorateVehicle(
     vehicleType: input.vehicleType,
     status: input.status,
     featured: input.featured ?? false,
-    searchKeywords: buildSearchKeywords(input),
+    seoTitle: input.seoTitle?.trim() || seo.title,
+    seoDescription: input.seoDescription?.trim() || seo.description,
+    searchKeywords: buildSearchKeywords({ ...input, name }),
     createdAt: extras.createdAt ?? timestamp,
     updatedAt: timestamp,
     createdBy: extras.createdBy ?? "",
@@ -225,11 +239,36 @@ export async function listAdminVehicles(options: {
   return paginate(sortVehicles(filterVehicles(vehicles, filters), sort), page, pageSize);
 }
 
+export async function listStockIds(excludeId?: string): Promise<string[]> {
+  if (isDemoMode()) {
+    return demoStore.vehicles
+      .filter((item) => item.id !== excludeId)
+      .map((item) => item.stockId)
+      .filter(Boolean);
+  }
+
+  const snapshot = await getDocs(query(collection(getDb(), COLLECTIONS.vehicles), limit(400)));
+  return snapshot.docs
+    .filter((item) => item.id !== excludeId)
+    .map((item) => String(item.data().stockId || ""))
+    .filter(Boolean);
+}
+
+export async function getNextStockId(excludeId?: string): Promise<string> {
+  return nextStockId(await listStockIds(excludeId));
+}
+
 export async function createVehicle(
   input: VehicleInput,
   userId: string,
 ): Promise<Vehicle> {
-  const vehicle = decorateVehicle(input, { createdBy: userId, updatedBy: userId });
+  const taken = (await listStockIds()).map((item) => item.toUpperCase());
+  const requested = input.stockId?.trim().toUpperCase() ?? "";
+  const stockId = requested && !taken.includes(requested) ? requested : nextStockId(taken);
+  const vehicle = decorateVehicle(
+    { ...input, stockId },
+    { createdBy: userId, updatedBy: userId },
+  );
 
   if (isDemoMode()) {
     vehicle.id = demoStore.id("v");
@@ -252,7 +291,7 @@ export async function updateVehicle(
     if (index < 0) throw new AppError("Vehicle not found", "not_found");
     const current = demoStore.vehicles[index];
     const merged = decorateVehicle(
-      { ...current, ...input } as VehicleInput,
+      { ...current, ...input, stockId: current.stockId } as VehicleInput,
       {
         id,
         images: input.images ?? current.images,
@@ -271,7 +310,7 @@ export async function updateVehicle(
   if (!snapshot.exists()) throw new AppError("Vehicle not found", "not_found");
   const current = { id, ...snapshot.data() } as Vehicle;
   const merged = decorateVehicle(
-    { ...current, ...input } as VehicleInput,
+    { ...current, ...input, stockId: current.stockId } as VehicleInput,
     {
       id,
       images: input.images ?? current.images,

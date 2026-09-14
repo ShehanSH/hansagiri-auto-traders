@@ -1,14 +1,29 @@
+import { BRAND_NAME } from "@/config/constants";
 import { buildSearchKeywords, vehicleSlug } from "@/utils/slug";
+import { composeVehicleName } from "@/utils/format";
+import { buildVehicleSeo } from "@/lib/seo/content";
 import type { Vehicle, VehicleFeature } from "@/types";
 
-function vehicle(input: Omit<Vehicle, "slug" | "searchKeywords" | "primaryImage"> & { primaryImage?: string }): Vehicle {
+function vehicle(
+  input: Omit<Vehicle, "slug" | "searchKeywords" | "primaryImage" | "name" | "seoTitle" | "seoDescription"> & {
+    name?: string;
+    seoTitle?: string;
+    seoDescription?: string;
+    primaryImage?: string;
+  },
+): Vehicle {
   const images = input.images;
   const primaryImage = input.primaryImage || images[0]?.url || "/cover.jpg";
+  const name = input.name?.trim() || composeVehicleName(input);
+  const seo = buildVehicleSeo({ ...input, name }, BRAND_NAME);
   return {
     ...input,
+    name,
+    seoTitle: input.seoTitle || seo.title,
+    seoDescription: input.seoDescription || seo.description,
     primaryImage,
     slug: vehicleSlug(input),
-    searchKeywords: buildSearchKeywords(input),
+    searchKeywords: buildSearchKeywords({ ...input, name }),
   };
 }
 

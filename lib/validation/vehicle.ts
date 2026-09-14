@@ -39,7 +39,8 @@ const features = [
 ] as const;
 
 export const vehicleSchema = z.object({
-  stockId: z.string().trim().min(2).max(30),
+  stockId: z.string().trim().max(30).optional().default(""),
+  name: z.string().trim().max(120).optional().default(""),
   make: z.string().trim().min(1).max(40),
   model: z.string().trim().min(1).max(40),
   variant: z.string().trim().max(60).default(""),
@@ -60,6 +61,8 @@ export const vehicleSchema = z.object({
   vehicleType: z.enum(["new", "used"]),
   status: z.enum(["draft", "available", "reserved", "sold", "archived"]),
   featured: z.boolean().default(false),
+  seoTitle: z.string().trim().max(70).optional().default(""),
+  seoDescription: z.string().trim().max(180).optional().default(""),
 });
 
 export { loginSchema } from "@/lib/validation/auth";

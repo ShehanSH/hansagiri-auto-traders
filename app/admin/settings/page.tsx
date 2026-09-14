@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { hasRole } from "@/lib/auth/permissions";
 import { getSettings, saveSettings } from "@/lib/services/settings";
+import { buildSiteSeo } from "@/lib/seo/content";
 import { logActivity } from "@/lib/services/crm";
 import { toUserMessage } from "@/utils/errors";
 import type { SiteSettings } from "@/types";
@@ -27,6 +28,11 @@ export default function SettingsPage() {
     event.preventDefault();
     if (!canWrite || !admin || !settings) return;
     const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+    const generated = buildSiteSeo({
+      businessName: String(data.businessName),
+      businessDescription: String(data.businessDescription),
+      address: String(data.address),
+    });
     const next: SiteSettings = {
       ...settings,
       businessName: String(data.businessName),
@@ -40,8 +46,8 @@ export default function SettingsPage() {
       heroTitle: String(data.heroTitle),
       heroSubtitle: String(data.heroSubtitle),
       heroSupporting: String(data.heroSupporting),
-      seoTitle: String(data.seoTitle),
-      seoDescription: String(data.seoDescription),
+      seoTitle: String(data.seoTitle).trim() || generated.title,
+      seoDescription: String(data.seoDescription).trim() || generated.description,
       featuredLimit: Number(data.featuredLimit) || 6,
       showSoldVehicles: data.showSoldVehicles === "on",
       showReservedVehicles: data.showReservedVehicles === "on",
@@ -87,8 +93,18 @@ export default function SettingsPage() {
       <Input name="heroTitle" label="Hero title" defaultValue={settings.heroTitle} />
       <Input name="heroSubtitle" label="Hero subtitle" defaultValue={settings.heroSubtitle} />
       <Input name="heroSupporting" label="Hero supporting text" defaultValue={settings.heroSupporting} />
-      <Input name="seoTitle" label="SEO title" defaultValue={settings.seoTitle} />
-      <Textarea name="seoDescription" label="SEO description" defaultValue={settings.seoDescription} />
+      <Input
+        name="seoTitle"
+        label="SEO title"
+        defaultValue={settings.seoTitle}
+        hint="Auto-filled from the business name if left blank."
+      />
+      <Textarea
+        name="seoDescription"
+        label="SEO description"
+        defaultValue={settings.seoDescription}
+        hint="Auto-filled from the business description if left blank."
+      />
       <Input name="featuredLimit" type="number" label="Featured vehicle limit" defaultValue={String(settings.featuredLimit)} />
       <label className="flex items-center gap-2 text-sm">
         <input name="showReservedVehicles" type="checkbox" defaultChecked={settings.showReservedVehicles} />

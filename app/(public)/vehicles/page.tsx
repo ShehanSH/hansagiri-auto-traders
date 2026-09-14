@@ -7,12 +7,10 @@ import { EmptyState } from "@/components/ui/Feedback";
 import { PAGE_SIZE } from "@/config/constants";
 import { getSettings } from "@/lib/services/settings.server";
 import { getFilterOptions, listPublicVehicles } from "@/lib/services/vehicles";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildPageMetadata, clipSeo } from "@/lib/seo/content";
+import { vehicleListJsonLd } from "@/lib/seo/jsonld";
 import type { BodyType, FuelType, Transmission, VehicleSort, VehicleType } from "@/types";
-
-export const metadata: Metadata = {
-  title: "Vehicles",
-  description: "Browse new and pre-owned vehicles from Hansagiri Auto Traders.",
-};
 
 type Search = Promise<{
   q?: string;
@@ -29,6 +27,27 @@ type Search = Promise<{
   sort?: string;
   page?: string;
 }>;
+
+export async function generateMetadata({ searchParams }: { searchParams: Search }): Promise<Metadata> {
+  const params = await searchParams;
+  const settings = await getSettings();
+  const focus = [params.make, params.q].filter(Boolean).join(" ");
+  const title = focus
+    ? clipSeo(`${focus} cars for sale | ${settings.businessName}`, 70)
+    : clipSeo(`Vehicles for sale | ${settings.businessName}`, 70);
+  const description = clipSeo(
+    focus
+      ? `Browse ${focus} new and pre-owned vehicles at ${settings.businessName}.`
+      : `Browse new and pre-owned vehicles at ${settings.businessName}. Transparent pricing, test drives, and trade-in assistance.`,
+    180,
+  );
+  return buildPageMetadata({
+    title,
+    description,
+    path: "/vehicles",
+    businessName: settings.businessName,
+  });
+}
 
 export default async function VehiclesPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;
@@ -56,6 +75,7 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 lg:px-8 lg:py-16">
+      <JsonLd data={vehicleListJsonLd(result.items, settings)} />
       <header className="max-w-3xl">
         <p className="text-xs uppercase tracking-[0.28em] text-gold">Showroom</p>
         <h1 className="mt-3 font-display text-4xl text-white sm:text-5xl">Vehicles</h1>

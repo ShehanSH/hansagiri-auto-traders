@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { getSettings } from "@/lib/services/settings.server";
+import { marketingPageMetadata } from "@/lib/seo/pages";
 
-export const metadata: Metadata = {
-  title: "About Us",
-  description:
-    "Hansagiri Auto Traders is a premier auto dealership specializing in quality new and pre-owned vehicles.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings();
+  return marketingPageMetadata(
+    "/about",
+    "About Us",
+    settings.businessDescription ||
+      `${settings.businessName} is a premier auto dealership specializing in quality new and pre-owned vehicles.`,
+  );
+}
 
 export default async function AboutPage() {
   const settings = await getSettings();
@@ -15,7 +20,7 @@ export default async function AboutPage() {
       <section className="relative overflow-hidden py-24">
         <img
           src="https://images.unsplash.com/photo-1485291571150-772bcfc10da5?auto=format&fit=crop&w=1800&q=80"
-          alt=""
+          alt={`${settings.businessName} showroom`}
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-dark via-dark/80 to-dark" />
