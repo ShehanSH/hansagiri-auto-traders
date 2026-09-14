@@ -24,7 +24,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribe = () => undefined;
+    let unsubscribe: () => void = () => {};
     let cancelled = false;
 
     void (async () => {
