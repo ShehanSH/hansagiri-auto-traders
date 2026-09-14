@@ -11,11 +11,12 @@ import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
 import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
-import { isDemoAuth, isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isDemoAuth, isDemoMode } from "@/lib/env";
 import { listActivity } from "@/lib/services/crm";
 import type { ActivityLog, DashboardStats, Inquiry, Vehicle } from "@/types";
 
 export async function getDashboardStats(): Promise<DashboardStats> {
+  await ensureFirebaseConfigured();
   if (isDemoMode()) {
     await ensureDemoCrmLoaded();
     return demoStore.stats();
@@ -51,6 +52,7 @@ export async function getRecentActivity(): Promise<ActivityLog[]> {
 }
 
 export async function getRecentInquiries(): Promise<Inquiry[]> {
+  await ensureFirebaseConfigured();
   if (isDemoMode()) {
     await ensureDemoCrmLoaded();
     return [...demoStore.inquiries]
@@ -69,6 +71,7 @@ export async function getRecentInquiries(): Promise<Inquiry[]> {
 }
 
 export async function getRecentVehicles(): Promise<Vehicle[]> {
+  await ensureFirebaseConfigured();
   if (isDemoMode()) {
     return [...demoStore.vehicles]
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))

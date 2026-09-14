@@ -13,7 +13,7 @@ import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isDemoMode } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { paginate } from "@/utils/vehicle-query";
 import type { ActivityLog, Customer, CustomerStatus, PaginatedResult } from "@/types";
@@ -38,6 +38,7 @@ export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">):
 }
 
 export async function listActivity(page = 1): Promise<PaginatedResult<ActivityLog>> {
+  await ensureFirebaseConfigured();
   if (isDemoMode()) {
     await ensureDemoCrmLoaded();
     const items = [...demoStore.activity].sort(
