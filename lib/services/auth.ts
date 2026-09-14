@@ -1,8 +1,10 @@
 import {
+  confirmPasswordReset,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
+  verifyPasswordResetCode,
   type User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -67,8 +69,35 @@ export async function logoutAdmin(): Promise<void> {
 }
 
 export async function resetAdminPassword(email: string): Promise<void> {
-  if (isDemoMode()) return;
-  await sendPasswordResetEmail(getFirebaseAuth(), email);
+  if (isDemoMode()) {
+    throw new AppError("Password reset is not available in demo mode.", "demo");
+  }
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  try {
+    await sendPasswordResetEmail(getFirebaseAuth(), email, {
+      url: `${origin}/admin/login`,
+    });
+  } catch (error) {
+    const code =
+      typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
+    if (code === "auth/user-not-found" || code === "auth/invalid-email") return;
+    throw error;
+  }
+}
+
+export async function readPasswordResetEmail(oobCode: string): Promise<string> {
+  if (isDemoMode()) {
+    throw new AppError("Password reset is not available in demo mode.", "demo");
+  }
+  return verifyPasswordResetCode(getFirebaseAuth(), oobCode);
+}
+
+export async function completeAdminPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+  if (isDemoMode()) {
+    throw new AppError("Password reset is not available in demo mode.", "demo");
+  }
+  await confirmPasswordReset(getFirebaseAuth(), oobCode, newPassword);
 }
 
 export function subscribeAuth(

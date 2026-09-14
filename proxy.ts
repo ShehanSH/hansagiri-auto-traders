@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith("/admin") || pathname === "/admin/login") {
+  if (!pathname.startsWith("/admin") || pathname === "/admin/login" || pathname === "/admin/reset-password") {
     return NextResponse.next();
   }
   const session = request.cookies.get("hat_admin_session");

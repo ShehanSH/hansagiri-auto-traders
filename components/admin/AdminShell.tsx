@@ -39,13 +39,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  const isPublicAdmin =
+    pathname === "/admin/login" || pathname === "/admin/reset-password";
+
   useEffect(() => {
-    if (!loading && !admin && pathname !== "/admin/login") {
+    if (!loading && !admin && !isPublicAdmin) {
       router.replace("/admin/login");
     }
-  }, [admin, loading, pathname, router]);
+  }, [admin, loading, isPublicAdmin, router]);
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  if (isPublicAdmin) return <>{children}</>;
 
   if (loading || !admin) {
     return (

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { passwordResetConfirmSchema } from "@/lib/validation/auth";
 import { inquirySchema } from "@/lib/validation/inquiry";
 import { testDriveSchema } from "@/lib/validation/test-drive";
 import { vehicleSchema } from "@/lib/validation/vehicle";
@@ -39,6 +40,22 @@ describe("test drive validation", () => {
       preferredTime: "10:00",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("admin password reset validation", () => {
+  it("requires matching passwords", () => {
+    const mismatch = passwordResetConfirmSchema.safeParse({
+      password: "newpass12",
+      confirmPassword: "newpass13",
+    });
+    expect(mismatch.success).toBe(false);
+
+    const match = passwordResetConfirmSchema.safeParse({
+      password: "newpass12",
+      confirmPassword: "newpass12",
+    });
+    expect(match.success).toBe(true);
   });
 });
 

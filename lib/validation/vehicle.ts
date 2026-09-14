@@ -62,9 +62,6 @@ export const vehicleSchema = z.object({
   featured: z.boolean().default(false),
 });
 
-export type VehicleInput = z.infer<typeof vehicleSchema>;
+export { loginSchema } from "@/lib/validation/auth";
 
-export const loginSchema = z.object({
-  email: z.string().trim().email("Enter a valid email"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
+export type VehicleInput = z.infer<typeof vehicleSchema>;

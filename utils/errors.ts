@@ -28,6 +28,12 @@ export function toUserMessage(error: unknown): string {
     if (code === "auth/too-many-requests") {
       return "Too many attempts. Please wait a moment and try again.";
     }
+    if (code === "auth/expired-action-code" || code === "auth/invalid-action-code") {
+      return "This reset link is invalid or has expired. Request a new one.";
+    }
+    if (code === "auth/weak-password") {
+      return "Choose a stronger password with at least 8 characters.";
+    }
     if (code === "auth/email-already-in-use") {
       return "This email is already in use.";
     }
