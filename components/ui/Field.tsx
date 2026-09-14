@@ -50,6 +50,7 @@ export function Textarea({
 export function Select({
   label,
   error,
+  hint,
   id,
   children,
   className = "",
@@ -62,6 +63,7 @@ export function Select({
       <select id={inputId} className={`${fieldClass} appearance-none ${className}`} {...props}>
         {children}
       </select>
+      {hint ? <span className="block text-xs text-muted">{hint}</span> : null}
       {error ? <span className="block text-xs text-danger">{error}</span> : null}
     </label>
   );

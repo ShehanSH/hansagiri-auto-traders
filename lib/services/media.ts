@@ -3,7 +3,7 @@ import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from "@/config/constants";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { getAdminIdToken } from "@/lib/services/auth";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { AppError } from "@/utils/errors";
@@ -70,7 +70,7 @@ export async function uploadPublicTradeInImage(file: File): Promise<VehicleImage
   validateImageFile(file);
   const blob = await compressImage(file);
 
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     const url = URL.createObjectURL(file);
     return {
       url,
@@ -91,8 +91,9 @@ export async function uploadAdminImage(
 ): Promise<MediaAsset> {
   validateImageFile(file);
   const blob = await compressImage(file);
+  await ensureFirebaseConfigured();
 
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     const asset: MediaAsset = {
       id: demoStore.id("media"),
       url: URL.createObjectURL(file),
@@ -131,7 +132,7 @@ export async function uploadAdminImage(
 }
 
 export async function listMedia(): Promise<MediaAsset[]> {
-  if (isDemoMode()) return [...demoStore.media];
+  if (isMemoryCatalog()) return [...demoStore.media];
   const snapshot = await getDocs(
     query(collection(getDb(), COLLECTIONS.media), orderBy("createdAt", "desc"), limit(100)),
   );
@@ -139,7 +140,7 @@ export async function listMedia(): Promise<MediaAsset[]> {
 }
 
 export async function deleteMedia(path: string): Promise<void> {
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     demoStore.media = demoStore.media.filter((item) => item.path !== path);
     return;
   }

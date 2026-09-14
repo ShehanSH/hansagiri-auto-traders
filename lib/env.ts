@@ -136,3 +136,7 @@ export function isDemoMode(): boolean {
 export function isDemoAuth(): boolean {
   return isDemoMode() && !isFirebaseConfigured();
 }
+
+export function isMemoryCatalog(): boolean {
+  return isDemoMode() && !isFirebaseConfigured();
+}

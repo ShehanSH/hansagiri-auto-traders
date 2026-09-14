@@ -28,6 +28,7 @@ import {
 } from "@/lib/services/vehicles";
 import { buildVehicleSeo, composeNameFromDraft } from "@/lib/seo/content";
 import { vehicleSchema } from "@/lib/validation/vehicle";
+import { ensureFirebaseConfigured } from "@/lib/env";
 import { composeVehicleName } from "@/utils/format";
 import { toUserMessage } from "@/utils/errors";
 import type { VehicleFeature, VehicleImage } from "@/types";
@@ -130,6 +131,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
   async function onFiles(files: FileList | null) {
     if (!files || !admin) return;
     try {
+      await ensureFirebaseConfigured();
       const uploaded: VehicleImage[] = [];
       for (const file of Array.from(files)) {
         const asset = await uploadAdminImage(file, "vehicles", admin.uid);
@@ -165,6 +167,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
     }
     setLoading(true);
     try {
+      await ensureFirebaseConfigured();
       if (vehicleId) {
         await updateVehicle(vehicleId, { ...parsed.data, images }, admin.uid);
         await logActivity({
@@ -174,10 +177,13 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
           entityType: "vehicle",
           entityId: vehicleId,
         });
-        toast.push("Vehicle saved");
+        toast.push(
+          parsed.data.status === "draft"
+            ? "Vehicle saved as a draft. Set status to Available to show it on the website."
+            : "Vehicle saved",
+        );
       } else {
-        const created = await createVehicle({ ...parsed.data, features }, admin.uid);
-        await updateVehicle(created.id, { images }, admin.uid);
+        const created = await createVehicle({ ...parsed.data, features }, admin.uid, images);
         await logActivity({
           userId: admin.uid,
           userEmail: admin.email,
@@ -185,7 +191,11 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
           entityType: "vehicle",
           entityId: created.id,
         });
-        toast.push("Vehicle created as configured status");
+        toast.push(
+          parsed.data.status === "draft"
+            ? "Vehicle saved as a draft. Set status to Available to show it on the website."
+            : "Vehicle created",
+        );
         router.replace(`/admin/vehicles/${created.id}`);
       }
     } catch (error) {
@@ -206,7 +216,13 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
           onChange={() => undefined}
           hint="Assigned automatically from the next available stock ID."
         />
-        <Select name="status" label="Status" defaultValue={defaults.status ?? "draft"} key={defaults.status}>
+        <Select
+          name="status"
+          label="Status"
+          defaultValue={defaults.status ?? "available"}
+          key={defaults.status || "available"}
+          hint="Available vehicles appear on the public website. Draft stays hidden."
+        >
           {VEHICLE_STATUSES.map((item) => (
             <option key={item}>{item}</option>
           ))}

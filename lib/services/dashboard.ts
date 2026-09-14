@@ -11,15 +11,29 @@ import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
 import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
-import { ensureFirebaseConfigured, isDemoAuth, isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isDemoAuth, isDemoMode, isMemoryCatalog } from "@/lib/env";
 import { listActivity } from "@/lib/services/crm";
+import { listAdminVehicles } from "@/lib/services/vehicles";
 import type { ActivityLog, DashboardStats, Inquiry, Vehicle } from "@/types";
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   await ensureFirebaseConfigured();
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     await ensureDemoCrmLoaded();
     return demoStore.stats();
+  }
+
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    const vehicles = (await listAdminVehicles({ page: 1, pageSize: 400 })).items;
+    const crm = demoStore.stats();
+    return {
+      ...crm,
+      totalVehicles: vehicles.filter((item) => item.status !== "archived").length,
+      availableVehicles: vehicles.filter((item) => item.status === "available").length,
+      reservedVehicles: vehicles.filter((item) => item.status === "reserved").length,
+      soldVehicles: vehicles.filter((item) => item.status === "sold").length,
+    };
   }
 
   const db = getDb();
@@ -72,19 +86,8 @@ export async function getRecentInquiries(): Promise<Inquiry[]> {
 
 export async function getRecentVehicles(): Promise<Vehicle[]> {
   await ensureFirebaseConfigured();
-  if (isDemoMode()) {
-    return [...demoStore.vehicles]
-      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
-      .slice(0, 6);
-  }
-  const snapshot = await getDocs(
-    query(
-      collection(getDb(), COLLECTIONS.vehicles),
-      orderBy("createdAt", "desc"),
-      limit(6),
-    ),
-  );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Vehicle);
+  const result = await listAdminVehicles({ page: 1, pageSize: 6, sort: "newest" });
+  return result.items;
 }
 
 export async function getAdminProfile(uid: string) {

@@ -46,7 +46,6 @@ export function filterVehicles(
 ): Vehicle[] {
   return vehicles.filter((vehicle) => {
     if (settings && !isPubliclyVisible(vehicle, settings)) return false;
-    if (!settings && vehicle.status === "draft") return false;
 
     if (filters.keyword && !matchesKeyword(vehicle, filters.keyword)) {
       return false;

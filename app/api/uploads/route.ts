@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isDemoMode } from "@/lib/env";
+import { isMemoryCatalog } from "@/lib/env";
 import {
   isAllowedUploadFolder,
   isPublicUploadFolder,
@@ -19,8 +19,8 @@ function readBearerToken(request: Request): string | null {
 }
 
 export async function POST(request: Request) {
-  if (isDemoMode()) {
-    return NextResponse.json({ error: "Uploads are disabled in demo mode." }, { status: 503 });
+  if (isMemoryCatalog()) {
+    return NextResponse.json({ error: "Uploads are disabled in local demo mode." }, { status: 503 });
   }
 
   try {
@@ -66,8 +66,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (isDemoMode()) {
-    return NextResponse.json({ error: "Uploads are disabled in demo mode." }, { status: 503 });
+  if (isMemoryCatalog()) {
+    return NextResponse.json({ error: "Uploads are disabled in local demo mode." }, { status: 503 });
   }
 
   try {
