@@ -27,6 +27,8 @@ import {
   isPubliclyVisible,
   paginate,
   sortVehicles,
+  uniqueMakes,
+  uniqueModels,
 } from "@/utils/vehicle-query";
 import type {
   PaginatedResult,
@@ -216,6 +218,17 @@ export async function listAdminVehicles(options: {
 
   const vehicles = await loadVehicles({ admin: true });
   return paginate(sortVehicles(filterVehicles(vehicles, filters), sort), page, pageSize);
+}
+
+export async function getAdminFilterOptions(make?: string): Promise<{
+  makes: string[];
+  models: string[];
+}> {
+  const vehicles = await loadVehicles({ admin: true });
+  return {
+    makes: uniqueMakes(vehicles).filter(Boolean),
+    models: uniqueModels(vehicles, make || undefined).filter(Boolean),
+  };
 }
 
 export async function listStockIds(excludeId?: string): Promise<string[]> {

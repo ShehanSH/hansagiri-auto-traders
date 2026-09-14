@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { VEHICLE_STATUSES, VEHICLE_TYPES } from "@/config/constants";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -9,11 +10,12 @@ import { Input, Select } from "@/components/ui/Field";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { hasRole } from "@/lib/auth/permissions";
 import { logActivity } from "@/lib/services/crm";
-import { deleteVehicle, listAdminVehicles } from "@/lib/services/vehicles";
-import { formatPrice, vehicleTitle } from "@/utils/format";
-import type { PaginatedResult, Vehicle, VehicleStatus } from "@/types";
+import { deleteVehicle, getAdminFilterOptions, listAdminVehicles } from "@/lib/services/vehicles";
+import { formatPrice, statusLabel, vehicleTitle } from "@/utils/format";
+import type { PaginatedResult, Vehicle, VehicleStatus, VehicleType } from "@/types";
 
 export default function AdminVehiclesPage() {
   const { admin } = useAdminAuth();
@@ -21,21 +23,41 @@ export default function AdminVehiclesPage() {
   const canWrite = hasRole(admin?.role, "vehicles:write") || hasRole(admin?.role, "*");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
+  const [make, setMake] = useState("");
+  const [model, setModel] = useState("");
   const [status, setStatus] = useState<VehicleStatus | "">("");
+  const [makes, setMakes] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
   const [result, setResult] = useState<PaginatedResult<Vehicle> | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Vehicle | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   const load = useCallback(() => {
     listAdminVehicles({
       page,
-      filters: { keyword: search, status },
+      filters: {
+        keyword: debouncedSearch,
+        vehicleType,
+        make,
+        model,
+        status,
+      },
     }).then(setResult);
-  }, [page, search, status]);
+  }, [page, debouncedSearch, vehicleType, make, model, status]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    getAdminFilterOptions(make).then((options) => {
+      setMakes(options.makes);
+      setModels(options.models);
+      setModel((current) => (current && !options.models.includes(current) ? "" : current));
+    });
+  }, [make]);
 
   return (
     <div>
@@ -47,8 +69,62 @@ export default function AdminVehiclesPage() {
           </Link>
         ) : null}
       </div>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Input label="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Input
+          label="Search"
+          value={search}
+          placeholder="Name or stock ID"
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+        <Select
+          label="Type"
+          value={vehicleType}
+          onChange={(event) => {
+            setVehicleType(event.target.value as VehicleType | "");
+            setPage(1);
+          }}
+        >
+          <option value="">All types</option>
+          {VEHICLE_TYPES.map((item) => (
+            <option key={item} value={item}>
+              {item === "used" ? "Pre-owned" : "New"}
+            </option>
+          ))}
+        </Select>
+        <Select
+          label="Make"
+          value={make}
+          onChange={(event) => {
+            setMake(event.target.value);
+            setModel("");
+            setPage(1);
+          }}
+        >
+          <option value="">All makes</option>
+          {makes.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </Select>
+        <Select
+          label="Model"
+          value={model}
+          onChange={(event) => {
+            setModel(event.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All models</option>
+          {models.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </Select>
         <Select
           label="Status"
           value={status}
@@ -57,10 +133,10 @@ export default function AdminVehiclesPage() {
             setPage(1);
           }}
         >
-          <option value="">All</option>
-          {["draft", "available", "reserved", "sold", "archived"].map((item) => (
+          <option value="">All statuses</option>
+          {VEHICLE_STATUSES.map((item) => (
             <option key={item} value={item}>
-              {item}
+              {statusLabel(item)}
             </option>
           ))}
         </Select>
@@ -108,7 +184,14 @@ export default function AdminVehiclesPage() {
             </tbody>
           </table>
         ) : (
-          <EmptyState title="No vehicles yet." description="Add a vehicle as a draft, then publish it." />
+          <EmptyState
+            title={debouncedSearch || vehicleType || make || model || status ? "No vehicles match these filters." : "No vehicles yet."}
+            description={
+              debouncedSearch || vehicleType || make || model || status
+                ? "Try another type, make, or model."
+                : "Add a vehicle as a draft, then publish it."
+            }
+          />
         )}
       </div>
       {result ? (
