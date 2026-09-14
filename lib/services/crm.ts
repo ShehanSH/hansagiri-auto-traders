@@ -58,9 +58,12 @@ export async function listActivity(page = 1): Promise<PaginatedResult<ActivityLo
   return paginate(items, page, 30);
 }
 
+export type CustomerActivityFilter = "" | "inquiry" | "test_drive" | "trade_in";
+
 export async function listCustomers(options: {
   search?: string;
   status?: CustomerStatus | "";
+  activity?: CustomerActivityFilter;
   page?: number;
 }): Promise<PaginatedResult<Customer>> {
   let items: Customer[] = [];
@@ -80,6 +83,9 @@ export async function listCustomers(options: {
   const search = options.search?.trim().toLowerCase() ?? "";
   const filtered = items.filter((item) => {
     if (options.status && item.status !== options.status) return false;
+    if (options.activity === "inquiry" && !(item.inquiryIds?.length > 0)) return false;
+    if (options.activity === "test_drive" && !(item.testDriveIds?.length > 0)) return false;
+    if (options.activity === "trade_in" && !(item.tradeInIds?.length > 0)) return false;
     if (!search) return true;
     return [item.name, item.phone, item.email].join(" ").toLowerCase().includes(search);
   });

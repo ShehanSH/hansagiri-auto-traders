@@ -1,7 +1,9 @@
 import type {
   AdminRole,
   BodyType,
+  CustomerStatus,
   FuelType,
+  InquirySource,
   InquiryStatus,
   TestDriveStatus,
   TradeInStatus,
@@ -100,6 +102,23 @@ export const INQUIRY_STATUSES: InquiryStatus[] = [
   "negotiation",
   "converted",
   "closed",
+  "lost",
+];
+
+export const INQUIRY_SOURCES: InquirySource[] = [
+  "vehicles",
+  "vehicle_detail",
+  "contact",
+  "home",
+  "financing",
+  "other",
+];
+
+export const CUSTOMER_STATUSES: CustomerStatus[] = [
+  "new",
+  "active",
+  "interested",
+  "converted",
   "lost",
 ];
 

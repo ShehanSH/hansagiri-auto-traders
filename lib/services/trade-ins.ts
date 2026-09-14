@@ -106,32 +106,43 @@ export async function submitTradeIn(
   return ref.id;
 }
 
+async function loadTradeIns(): Promise<TradeInRequest[]> {
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    return [...demoStore.tradeIns];
+  }
+  const snapshot = await getDocs(
+    query(
+      collection(getDb(), COLLECTIONS.tradeIns),
+      orderBy("createdAt", "desc"),
+      limit(200),
+    ),
+  );
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TradeInRequest);
+}
+
 export async function listTradeIns(options: {
   status?: TradeInStatus | "";
+  make?: string;
   search?: string;
   page?: number;
 }): Promise<PaginatedResult<TradeInRequest>> {
-  let items: TradeInRequest[] = [];
-  if (isDemoMode()) {
-    await ensureDemoCrmLoaded();
-    items = [...demoStore.tradeIns];
-  } else {
-    const snapshot = await getDocs(
-      query(
-        collection(getDb(), COLLECTIONS.tradeIns),
-        orderBy("createdAt", "desc"),
-        limit(200),
-      ),
-    );
-    items = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TradeInRequest);
-  }
+  const items = await loadTradeIns();
   const search = options.search?.trim().toLowerCase() ?? "";
   const filtered = items.filter((item) => {
     if (options.status && item.status !== options.status) return false;
+    if (options.make && item.make !== options.make) return false;
     if (!search) return true;
     return [item.name, item.phone, item.make, item.model].join(" ").toLowerCase().includes(search);
   });
   return paginate(filtered, options.page ?? 1, 20);
+}
+
+export async function getTradeInFilterOptions(): Promise<{ makes: string[] }> {
+  const items = await loadTradeIns();
+  return {
+    makes: [...new Set(items.map((item) => item.make).filter(Boolean))].sort(),
+  };
 }
 
 export async function getTradeIn(id: string): Promise<TradeInRequest | null> {

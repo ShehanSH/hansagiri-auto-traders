@@ -6,29 +6,66 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
 import { listInquiries } from "@/lib/services/inquiries";
-import { INQUIRY_STATUSES } from "@/config/constants";
-import { formatDate } from "@/utils/format";
-import type { Inquiry, InquiryStatus, PaginatedResult } from "@/types";
+import { INQUIRY_SOURCES, INQUIRY_STATUSES } from "@/config/constants";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { formatDate, statusLabel } from "@/utils/format";
+import type { Inquiry, InquirySource, InquiryStatus, PaginatedResult } from "@/types";
 
 export default function InquiriesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<InquiryStatus | "">("");
+  const [source, setSource] = useState<InquirySource | "">("");
   const [result, setResult] = useState<PaginatedResult<Inquiry> | null>(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
-    listInquiries({ page, search, status }).then(setResult);
-  }, [page, search, status]);
+    listInquiries({ page, search: debouncedSearch, status, source }).then(setResult);
+  }, [page, debouncedSearch, status, source]);
+
+  const filtered = Boolean(debouncedSearch || status || source);
 
   return (
     <div>
       <h1 className="font-display text-3xl">Inquiries</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Input label="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
-        <Select label="Status" value={status} onChange={(event) => { setStatus(event.target.value as InquiryStatus | ""); setPage(1); }}>
-          <option value="">All</option>
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Input
+          label="Search"
+          value={search}
+          placeholder="Name or phone"
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as InquiryStatus | "");
+            setPage(1);
+          }}
+        >
+          <option value="">All statuses</option>
           {INQUIRY_STATUSES.map((item) => (
-            <option key={item}>{item}</option>
+            <option key={item} value={item}>
+              {statusLabel(item)}
+            </option>
+          ))}
+        </Select>
+        <Select
+          label="Source"
+          value={source}
+          onChange={(event) => {
+            setSource(event.target.value as InquirySource | "");
+            setPage(1);
+          }}
+        >
+          <option value="">All sources</option>
+          {INQUIRY_SOURCES.map((item) => (
+            <option key={item} value={item}>
+              {statusLabel(item)}
+            </option>
           ))}
         </Select>
       </div>
@@ -58,13 +95,16 @@ export default function InquiriesPage() {
                   <td className="px-3 py-3">
                     <StatusBadge status={item.status} />
                   </td>
-                  <td className="px-3 py-3">{item.source}</td>
+                  <td className="px-3 py-3">{statusLabel(item.source)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <EmptyState title="No customer inquiries yet." />
+          <EmptyState
+            title={filtered ? "No inquiries match these filters." : "No customer inquiries yet."}
+            description={filtered ? "Try another status or source." : undefined}
+          />
         )}
       </div>
       {result ? (

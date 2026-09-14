@@ -27,7 +27,7 @@ import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
 import { paginate } from "@/utils/vehicle-query";
 import type { InquiryInput } from "@/lib/validation/inquiry";
-import type { AdminNote, Inquiry, InquiryStatus, PaginatedResult } from "@/types";
+import type { AdminNote, Inquiry, InquirySource, InquiryStatus, PaginatedResult } from "@/types";
 
 function toInquiry(id: string, input: InquiryInput, customerId: string): Inquiry {
   const timestamp = nowIso();
@@ -107,6 +107,7 @@ export async function submitInquiry(input: InquiryInput): Promise<string> {
 
 export async function listInquiries(options: {
   status?: InquiryStatus | "";
+  source?: InquirySource | "";
   search?: string;
   page?: number;
   pageSize?: number;
@@ -133,6 +134,7 @@ export async function listInquiries(options: {
   const filtered = items.filter((item) => {
     if (item.archived) return false;
     if (options.status && item.status !== options.status) return false;
+    if (options.source && item.source !== options.source) return false;
     if (!search) return true;
     return [item.name, item.phone, item.email, item.vehicleLabel]
       .join(" ")

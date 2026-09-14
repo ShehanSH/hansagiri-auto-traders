@@ -2,32 +2,69 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CUSTOMER_STATUSES } from "@/config/constants";
 import { Input, Select } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
-import { listCustomers } from "@/lib/services/crm";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { listCustomers, type CustomerActivityFilter } from "@/lib/services/crm";
+import { statusLabel } from "@/utils/format";
 import type { Customer, CustomerStatus, PaginatedResult } from "@/types";
 
 export default function CustomersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<CustomerStatus | "">("");
+  const [activity, setActivity] = useState<CustomerActivityFilter>("");
   const [result, setResult] = useState<PaginatedResult<Customer> | null>(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
-    listCustomers({ page, search, status }).then(setResult);
-  }, [page, search, status]);
+    listCustomers({ page, search: debouncedSearch, status, activity }).then(setResult);
+  }, [page, debouncedSearch, status, activity]);
+
+  const filtered = Boolean(debouncedSearch || status || activity);
 
   return (
     <div>
       <h1 className="font-display text-3xl">Customers</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Input label="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
-        <Select label="Status" value={status} onChange={(event) => { setStatus(event.target.value as CustomerStatus | ""); setPage(1); }}>
-          <option value="">All</option>
-          {["new", "active", "interested", "converted", "lost"].map((item) => (
-            <option key={item}>{item}</option>
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Input
+          label="Search"
+          value={search}
+          placeholder="Name or phone"
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as CustomerStatus | "");
+            setPage(1);
+          }}
+        >
+          <option value="">All statuses</option>
+          {CUSTOMER_STATUSES.map((item) => (
+            <option key={item} value={item}>
+              {statusLabel(item)}
+            </option>
           ))}
+        </Select>
+        <Select
+          label="Activity"
+          value={activity}
+          onChange={(event) => {
+            setActivity(event.target.value as CustomerActivityFilter);
+            setPage(1);
+          }}
+        >
+          <option value="">All customers</option>
+          <option value="inquiry">Has inquiry</option>
+          <option value="test_drive">Has test drive</option>
+          <option value="trade_in">Has trade-in</option>
         </Select>
       </div>
       <div className="mt-6 overflow-x-auto">
@@ -59,7 +96,12 @@ export default function CustomersPage() {
             </tbody>
           </table>
         ) : (
-          <EmptyState title="No customers yet." description="Customers appear when enquiries are submitted." />
+          <EmptyState
+            title={filtered ? "No customers match these filters." : "No customers yet."}
+            description={
+              filtered ? "Try another status or activity." : "Customers appear when enquiries are submitted."
+            }
+          />
         )}
       </div>
       {result ? (

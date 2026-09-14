@@ -88,33 +88,43 @@ export async function submitTestDrive(input: TestDriveInput): Promise<string> {
   return ref.id;
 }
 
+async function loadTestDrives(): Promise<TestDriveRequest[]> {
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    return [...demoStore.testDrives];
+  }
+  const snapshot = await getDocs(
+    query(
+      collection(getDb(), COLLECTIONS.testDrives),
+      orderBy("createdAt", "desc"),
+      limit(200),
+    ),
+  );
+  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TestDriveRequest);
+}
+
 export async function listTestDrives(options: {
   status?: TestDriveStatus | "";
+  vehicle?: string;
   search?: string;
   page?: number;
 }): Promise<PaginatedResult<TestDriveRequest>> {
-  let items: TestDriveRequest[] = [];
-  if (isDemoMode()) {
-    await ensureDemoCrmLoaded();
-    items = [...demoStore.testDrives];
-  } else {
-    const snapshot = await getDocs(
-      query(
-        collection(getDb(), COLLECTIONS.testDrives),
-        orderBy("createdAt", "desc"),
-        limit(200),
-      ),
-    );
-    items = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TestDriveRequest);
-  }
-
+  const items = await loadTestDrives();
   const search = options.search?.trim().toLowerCase() ?? "";
   const filtered = items.filter((item) => {
     if (options.status && item.status !== options.status) return false;
+    if (options.vehicle && item.vehicleLabel !== options.vehicle) return false;
     if (!search) return true;
     return [item.name, item.phone, item.vehicleLabel].join(" ").toLowerCase().includes(search);
   });
   return paginate(filtered, options.page ?? 1, 20);
+}
+
+export async function getTestDriveFilterOptions(): Promise<{ vehicles: string[] }> {
+  const items = await loadTestDrives();
+  return {
+    vehicles: [...new Set(items.map((item) => item.vehicleLabel).filter(Boolean))].sort(),
+  };
 }
 
 export async function getTestDrive(id: string): Promise<TestDriveRequest | null> {

@@ -6,29 +6,71 @@ import { TEST_DRIVE_STATUSES } from "@/config/constants";
 import { Input, Select } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
-import { listTestDrives } from "@/lib/services/test-drives";
-import { formatDate } from "@/utils/format";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { getTestDriveFilterOptions, listTestDrives } from "@/lib/services/test-drives";
+import { formatDate, statusLabel } from "@/utils/format";
 import type { PaginatedResult, TestDriveRequest, TestDriveStatus } from "@/types";
 
 export default function TestDrivesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<TestDriveStatus | "">("");
+  const [vehicle, setVehicle] = useState("");
+  const [vehicles, setVehicles] = useState<string[]>([]);
   const [result, setResult] = useState<PaginatedResult<TestDriveRequest> | null>(null);
+  const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
-    listTestDrives({ page, search, status }).then(setResult);
-  }, [page, search, status]);
+    getTestDriveFilterOptions().then((options) => setVehicles(options.vehicles));
+  }, []);
+
+  useEffect(() => {
+    listTestDrives({ page, search: debouncedSearch, status, vehicle }).then(setResult);
+  }, [page, debouncedSearch, status, vehicle]);
+
+  const filtered = Boolean(debouncedSearch || status || vehicle);
 
   return (
     <div>
       <h1 className="font-display text-3xl">Test drives</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Input label="Search" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} />
-        <Select label="Status" value={status} onChange={(event) => { setStatus(event.target.value as TestDriveStatus | ""); setPage(1); }}>
-          <option value="">All</option>
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Input
+          label="Search"
+          value={search}
+          placeholder="Name or phone"
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+        <Select
+          label="Status"
+          value={status}
+          onChange={(event) => {
+            setStatus(event.target.value as TestDriveStatus | "");
+            setPage(1);
+          }}
+        >
+          <option value="">All statuses</option>
           {TEST_DRIVE_STATUSES.map((item) => (
-            <option key={item}>{item}</option>
+            <option key={item} value={item}>
+              {statusLabel(item)}
+            </option>
+          ))}
+        </Select>
+        <Select
+          label="Vehicle"
+          value={vehicle}
+          onChange={(event) => {
+            setVehicle(event.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">All vehicles</option>
+          {vehicles.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
           ))}
         </Select>
       </div>
@@ -63,7 +105,10 @@ export default function TestDrivesPage() {
             </tbody>
           </table>
         ) : (
-          <EmptyState title="No test drive requests yet." />
+          <EmptyState
+            title={filtered ? "No test drives match these filters." : "No test drive requests yet."}
+            description={filtered ? "Try another status or vehicle." : undefined}
+          />
         )}
       </div>
       {result ? (
