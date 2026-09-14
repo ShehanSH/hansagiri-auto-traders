@@ -19,6 +19,12 @@ export function toUserMessage(error: unknown): string {
     if (code === "unavailable" || code === "network-request-failed") {
       return "We could not reach the server. Please check your connection and try again.";
     }
+    if (code === "auth/unauthorized-domain") {
+      return "This website domain is not authorised in Firebase Authentication.";
+    }
+    if (code === "auth/operation-not-allowed") {
+      return "Email and password sign-in is not enabled in Firebase Authentication.";
+    }
     if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
       return "Invalid email or password.";
     }

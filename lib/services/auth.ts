@@ -36,11 +36,16 @@ function clearSessionCookie() {
 
 export async function getAdminRecord(uid: string): Promise<AdminUser | null> {
   if (isDemoMode()) return demoStore.demoUser;
-  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.admins, uid));
-  if (!snapshot.exists()) return null;
-  const data = snapshot.data() as AdminUser;
-  if (data.active === false) return null;
-  return { ...data, uid };
+  try {
+    const snapshot = await getDoc(doc(getDb(), COLLECTIONS.admins, uid));
+    if (!snapshot.exists()) return null;
+    const data = snapshot.data() as AdminUser;
+    if (data.active === false) return null;
+    return { ...data, uid };
+  } catch (error) {
+    console.error("Failed to load admin record", error);
+    return null;
+  }
 }
 
 export async function loginAdmin(email: string, password: string): Promise<AdminUser> {
@@ -74,7 +79,7 @@ export async function getAdminIdToken(): Promise<string | null> {
 
 export async function logoutAdmin(): Promise<void> {
   clearSessionCookie();
-  if (!isDemoMode()) {
+  if (!isDemoMode() && isFirebaseConfigured()) {
     await signOut(getFirebaseAuth());
   }
 }
@@ -119,14 +124,25 @@ export function subscribeAuth(
     return () => undefined;
   }
 
-  return onAuthStateChanged(getFirebaseAuth(), async (user) => {
-    if (!user) {
-      callback(null, null);
-      return;
-    }
-    const admin = await getAdminRecord(user.uid);
-    callback(user, admin);
-  });
+  if (!isFirebaseConfigured()) {
+    callback(null, null);
+    return () => undefined;
+  }
+
+  try {
+    return onAuthStateChanged(getFirebaseAuth(), async (user) => {
+      if (!user) {
+        callback(null, null);
+        return;
+      }
+      const admin = await getAdminRecord(user.uid);
+      callback(user, admin);
+    });
+  } catch (error) {
+    console.error("Failed to subscribe to admin auth", error);
+    callback(null, null);
+    return () => undefined;
+  }
 }
 
 export function roleOf(admin: AdminUser | null): AdminRole | null {

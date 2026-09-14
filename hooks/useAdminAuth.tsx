@@ -24,10 +24,17 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    return subscribeAuth((_user, record) => {
-      setAdmin(record);
+    try {
+      return subscribeAuth((_user, record) => {
+        setAdmin(record);
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Admin auth failed to start", error);
+      setAdmin(null);
       setLoading(false);
-    });
+      return () => undefined;
+    }
   }, []);
 
   const value = useMemo<AuthState>(
