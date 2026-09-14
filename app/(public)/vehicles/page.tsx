@@ -71,7 +71,12 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
       mileageMax: params.mileageMax ? Number(params.mileageMax) : undefined,
     },
   });
-  const { makes: allMakes } = await getFilterOptions();
+  const {
+    makes: allMakes,
+    priceMin,
+    priceMax,
+    priceStep,
+  } = await getFilterOptions();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 lg:px-8 lg:py-16">
@@ -85,7 +90,13 @@ export default async function VehiclesPage({ searchParams }: { searchParams: Sea
       </header>
       <div className="mt-10 flex flex-col gap-8 lg:flex-row lg:items-start">
         <Suspense>
-          <VehicleFilters makes={allMakes} />
+          <VehicleFilters
+            makes={allMakes}
+            priceMin={priceMin}
+            priceMax={priceMax}
+            priceStep={priceStep}
+            currency={settings.currency}
+          />
         </Suspense>
         <section className="min-w-0 flex-1">
           <Suspense>

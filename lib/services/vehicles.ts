@@ -20,6 +20,7 @@ import { buildVehicleSeo } from "@/lib/seo/content";
 import { AppError } from "@/utils/errors";
 import { composeVehicleName } from "@/utils/format";
 import { buildSearchKeywords, vehicleSlug } from "@/utils/slug";
+import { catalogPriceBounds } from "@/utils/price-range";
 import { nextStockId } from "@/utils/stock-id";
 import {
   filterVehicles,
@@ -318,10 +319,20 @@ export async function deleteVehicle(id: string, stockId?: string): Promise<void>
   });
 }
 
-export async function getFilterOptions(): Promise<{ makes: string[]; models: string[] }> {
+export async function getFilterOptions(): Promise<{
+  makes: string[];
+  models: string[];
+  priceMin: number;
+  priceMax: number;
+  priceStep: number;
+}> {
   const result = await listPublicVehicles({ page: 1, pageSize: 400 });
+  const bounds = catalogPriceBounds(result.items.map((item) => item.price));
   return {
     makes: [...new Set(result.items.map((item) => item.make).filter(Boolean))].sort(),
     models: [...new Set(result.items.map((item) => item.model).filter(Boolean))].sort(),
+    priceMin: bounds.min,
+    priceMax: bounds.max,
+    priceStep: bounds.step,
   };
 }

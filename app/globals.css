@@ -72,6 +72,78 @@ h3,
   border: 1px solid rgba(201, 162, 39, 0.16);
 }
 
+.dual-range {
+  position: relative;
+  height: 28px;
+}
+
+.dual-range-track,
+.dual-range-fill {
+  position: absolute;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+}
+
+.dual-range-track {
+  inset-inline: 0;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dual-range-fill {
+  background: var(--gold);
+}
+
+.dual-range input[type="range"] {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  touch-action: none;
+}
+
+.dual-range input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+  border: none;
+}
+
+.dual-range input[type="range"]::-webkit-slider-thumb {
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border: 2px solid var(--dark);
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.45);
+  cursor: grab;
+}
+
+.dual-range input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: transparent;
+  border: none;
+}
+
+.dual-range input[type="range"]::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--dark);
+  border-radius: 999px;
+  background: var(--gold);
+  box-shadow: 0 0 0 1px rgba(201, 162, 39, 0.45);
+  cursor: grab;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
