@@ -1,31 +1,41 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
+import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { hasRole } from "@/lib/auth/permissions";
-import { listAdminVehicles } from "@/lib/services/vehicles";
+import { logActivity } from "@/lib/services/crm";
+import { deleteVehicle, listAdminVehicles } from "@/lib/services/vehicles";
 import { formatPrice, vehicleTitle } from "@/utils/format";
 import type { PaginatedResult, Vehicle, VehicleStatus } from "@/types";
 
 export default function AdminVehiclesPage() {
   const { admin } = useAdminAuth();
+  const toast = useToast();
   const canWrite = hasRole(admin?.role, "vehicles:write") || hasRole(admin?.role, "*");
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<VehicleStatus | "">("");
   const [result, setResult] = useState<PaginatedResult<Vehicle> | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Vehicle | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     listAdminVehicles({
       page,
       filters: { keyword: search, status },
     }).then(setResult);
   }, [page, search, status]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div>
@@ -64,6 +74,7 @@ export default function AdminVehiclesPage() {
                 <th className="px-3 py-3">Price</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Featured</th>
+                {canWrite ? <th className="px-3 py-3">Actions</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -80,6 +91,18 @@ export default function AdminVehiclesPage() {
                     <StatusBadge status={item.status} />
                   </td>
                   <td className="px-3 py-3">{item.featured ? "Yes" : "—"}</td>
+                  {canWrite ? (
+                    <td className="px-3 py-3">
+                      <Button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setPendingDelete(item)}
+                      >
+                        Delete
+                      </Button>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
@@ -93,6 +116,39 @@ export default function AdminVehiclesPage() {
           <Pagination page={result.page} pageSize={result.pageSize} total={result.total} onPage={setPage} />
         </div>
       ) : null}
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this vehicle?"
+        description="This permanently removes the listing from the admin dashboard and the public website. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        loading={deleting}
+        onClose={() => {
+          if (deleting) return;
+          setPendingDelete(null);
+        }}
+        onConfirm={() => {
+          void (async () => {
+            if (!pendingDelete || !admin) return;
+            setDeleting(true);
+            try {
+              await deleteVehicle(pendingDelete.id, pendingDelete.stockId);
+              await logActivity({
+                userId: admin.uid,
+                userEmail: admin.email,
+                action: "Vehicle deleted",
+                entityType: "vehicle",
+                entityId: pendingDelete.id,
+              });
+              toast.push("Vehicle deleted");
+              setPendingDelete(null);
+              load();
+            } finally {
+              setDeleting(false);
+            }
+          })();
+        }}
+      />
     </div>
   );
 }

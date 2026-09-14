@@ -135,6 +135,7 @@ export interface Vehicle {
   vehicleType: VehicleType;
   status: VehicleStatus;
   featured: boolean;
+  deleted?: boolean;
   seoTitle: string;
   seoDescription: string;
   searchKeywords: string[];

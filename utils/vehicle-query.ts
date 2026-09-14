@@ -18,6 +18,7 @@ export function isPubliclyVisible(
   vehicle: Vehicle,
   settings: SiteSettings,
 ): boolean {
+  if (vehicle.deleted) return false;
   if (vehicle.status === "draft" || vehicle.status === "archived") return false;
   return publicStatuses(settings).includes(vehicle.status);
 }
@@ -45,6 +46,7 @@ export function filterVehicles(
   settings?: SiteSettings,
 ): Vehicle[] {
   return vehicles.filter((vehicle) => {
+    if (vehicle.deleted) return false;
     if (settings && !isPubliclyVisible(vehicle, settings)) return false;
 
     if (filters.keyword && !matchesKeyword(vehicle, filters.keyword)) {

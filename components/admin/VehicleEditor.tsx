@@ -22,6 +22,7 @@ import { uploadAdminImage } from "@/lib/services/media";
 import {
   archiveVehicle,
   createVehicle,
+  deleteVehicle,
   getNextStockId,
   getVehicleById,
   updateVehicle,
@@ -42,7 +43,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState<VehicleImage[]>([]);
   const [features, setFeatures] = useState<VehicleFeature[]>([]);
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useState<"archive" | "delete" | null>(null);
   const [defaults, setDefaults] = useState<Record<string, string>>({});
   const [stockId, setStockId] = useState("");
   const [name, setName] = useState("");
@@ -366,21 +367,26 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
             Save vehicle
           </Button>
           {vehicleId ? (
-            <Button type="button" variant="danger" onClick={() => setConfirm(true)}>
-              Archive
-            </Button>
+            <>
+              <Button type="button" variant="secondary" onClick={() => setConfirm("archive")}>
+                Archive
+              </Button>
+              <Button type="button" variant="danger" onClick={() => setConfirm("delete")}>
+                Delete
+              </Button>
+            </>
           ) : null}
         </div>
       ) : (
         <p className="text-sm text-muted">Read-only access</p>
       )}
       <ConfirmDialog
-        open={confirm}
+        open={confirm === "archive"}
         title="Archive this vehicle?"
-        description="It will be hidden from the public website."
+        description="It will be hidden from the public website, but you can still find it in admin under Archived."
         confirmLabel="Archive"
         danger
-        onClose={() => setConfirm(false)}
+        onClose={() => setConfirm(null)}
         onConfirm={async () => {
           if (!vehicleId || !admin) return;
           await archiveVehicle(vehicleId, admin.uid);
@@ -391,8 +397,30 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
             entityType: "vehicle",
             entityId: vehicleId,
           });
-          setConfirm(false);
+          setConfirm(null);
           toast.push("Vehicle archived");
+          router.push("/admin/vehicles");
+        }}
+      />
+      <ConfirmDialog
+        open={confirm === "delete"}
+        title="Delete this vehicle?"
+        description="This permanently removes the listing from the admin dashboard and the public website. This cannot be undone."
+        confirmLabel="Delete"
+        danger
+        onClose={() => setConfirm(null)}
+        onConfirm={async () => {
+          if (!vehicleId || !admin) return;
+          await deleteVehicle(vehicleId, stockId);
+          await logActivity({
+            userId: admin.uid,
+            userEmail: admin.email,
+            action: "Vehicle deleted",
+            entityType: "vehicle",
+            entityId: vehicleId,
+          });
+          setConfirm(null);
+          toast.push("Vehicle deleted");
           router.push("/admin/vehicles");
         }}
       />

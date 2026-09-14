@@ -1,7 +1,6 @@
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   limit,
@@ -99,13 +98,27 @@ function persistableImages(images: VehicleImage[] = []): VehicleImage[] {
   return images.filter((image) => Boolean(image.url) && !image.url.startsWith("blob:"));
 }
 
+function stockKey(item: Pick<Vehicle, "stockId">): string {
+  return (item.stockId ?? "").trim().toUpperCase();
+}
+
 function mergeVehicleLists(demo: Vehicle[], live: Vehicle[]): Vehicle[] {
-  const liveIds = new Set(live.map((item) => item.id));
-  const liveStock = new Set(live.map((item) => item.stockId.trim().toUpperCase()));
-  const keptDemo = demo.filter(
-    (item) => !liveIds.has(item.id) && !liveStock.has(item.stockId.trim().toUpperCase()),
-  );
-  return [...keptDemo, ...live];
+  const removed = live.filter((item) => item.deleted);
+  const removedIds = new Set(removed.map((item) => item.id));
+  const removedStock = new Set(removed.map(stockKey).filter(Boolean));
+  const visibleLive = live.filter((item) => !item.deleted);
+  const liveIds = new Set(visibleLive.map((item) => item.id));
+  const liveStock = new Set(visibleLive.map(stockKey).filter(Boolean));
+  const keptDemo = demo.filter((item) => {
+    const stock = stockKey(item);
+    return (
+      !removedIds.has(item.id) &&
+      !liveIds.has(item.id) &&
+      !(stock && removedStock.has(stock)) &&
+      !(stock && liveStock.has(stock))
+    );
+  });
+  return [...keptDemo, ...visibleLive];
 }
 
 async function fetchFirestoreVehicles(options?: { admin?: boolean }): Promise<Vehicle[]> {
@@ -122,7 +135,8 @@ async function loadVehicles(options?: { admin?: boolean }): Promise<Vehicle[]> {
   if (isMemoryCatalog()) return [...demoStore.vehicles];
   if (!isFirebaseConfigured()) return isDemoMode() ? [...demoStore.vehicles] : [];
   const live = await fetchFirestoreVehicles(options);
-  return isDemoMode() ? mergeVehicleLists(demoStore.vehicles, live) : live;
+  const merged = isDemoMode() ? mergeVehicleLists(demoStore.vehicles, live) : live;
+  return merged.filter((item) => !item.deleted);
 }
 
 export async function listPublicVehicles(options: {
@@ -287,13 +301,21 @@ export async function archiveVehicle(id: string, userId: string): Promise<void> 
   await setVehicleStatus(id, "archived", userId);
 }
 
-export async function deleteVehicle(id: string): Promise<void> {
-  if (isMemoryCatalog()) {
-    demoStore.vehicles = demoStore.vehicles.filter((item) => item.id !== id);
-    return;
-  }
-  await deleteDoc(doc(getDb(), COLLECTIONS.vehicles, id));
+export async function deleteVehicle(id: string, stockId?: string): Promise<void> {
+  const existing = demoStore.vehicles.find((item) => item.id === id);
   demoStore.vehicles = demoStore.vehicles.filter((item) => item.id !== id);
+  if (isMemoryCatalog()) return;
+
+  const ref = doc(getDb(), COLLECTIONS.vehicles, id);
+  await setDoc(ref, {
+    id,
+    stockId: stockId || existing?.stockId || "",
+    deleted: true,
+    // Public reads only include available/reserved/sold. Keep this readable so
+    // a deleted demo listing does not reappear from the seed catalog.
+    status: "available" as VehicleStatus,
+    updatedAt: nowIso(),
+  });
 }
 
 export async function getFilterOptions(): Promise<{ makes: string[]; models: string[] }> {

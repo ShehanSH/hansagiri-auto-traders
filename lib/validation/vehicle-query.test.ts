@@ -48,6 +48,13 @@ describe("public vehicle visibility", () => {
     expect(isPubliclyVisible(available, DEFAULT_SETTINGS)).toBe(true);
   });
 
+  it("hides deleted vehicles from public and admin filters", () => {
+    const deleted = { ...available, deleted: true };
+    expect(isPubliclyVisible(deleted, DEFAULT_SETTINGS)).toBe(false);
+    expect(filterVehicles([deleted], {})).toHaveLength(0);
+    expect(filterVehicles([deleted], {}, DEFAULT_SETTINGS)).toHaveLength(0);
+  });
+
   it("filters by make and keyword", () => {
     const toyota = filterVehicles(DEMO_VEHICLES, { make: "Toyota", keyword: "premio" }, DEFAULT_SETTINGS);
     expect(toyota.every((item) => item.make === "Toyota")).toBe(true);
