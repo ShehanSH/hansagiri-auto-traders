@@ -36,15 +36,27 @@ function clearSessionCookie() {
 
 export async function getAdminRecord(uid: string): Promise<AdminUser | null> {
   if (isDemoAuth()) return demoStore.demoUser;
+
+  const ref = doc(getDb(), COLLECTIONS.admins, uid);
   try {
-    const snapshot = await getDoc(doc(getDb(), COLLECTIONS.admins, uid));
+    const snapshot = await getDoc(ref);
     if (!snapshot.exists()) return null;
     const data = snapshot.data() as AdminUser;
     if (data.active === false) return null;
     return { ...data, uid };
   } catch (error) {
+    const code =
+      typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
+    if (code === "permission-denied") {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      const retry = await getDoc(ref);
+      if (!retry.exists()) return null;
+      const data = retry.data() as AdminUser;
+      if (data.active === false) return null;
+      return { ...data, uid };
+    }
     console.error("Failed to load admin record", error);
-    return null;
+    throw error;
   }
 }
 
@@ -61,10 +73,13 @@ export async function loginAdmin(email: string, password: string): Promise<Admin
 
   assertFirebaseReady();
 
-  const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+  const auth = getFirebaseAuth();
+  const credential = await signInWithEmailAndPassword(auth, email, password);
+  await auth.authStateReady();
+  await credential.user.getIdToken(true);
   const admin = await getAdminRecord(credential.user.uid);
   if (!admin) {
-    await signOut(getFirebaseAuth());
+    await signOut(auth);
     throw new AppError("This account is not authorised for admin access.", "unauthorized");
   }
   const token = await credential.user.getIdToken();
