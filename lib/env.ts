@@ -25,7 +25,12 @@ export function isFirebaseConfigured(): boolean {
   );
 }
 
+function isHostedProduction(): boolean {
+  const vercelEnv = readEnv("VERCEL_ENV") || readEnv("NEXT_PUBLIC_VERCEL_ENV");
+  return vercelEnv === "production";
+}
+
 export function isDemoMode(): boolean {
-  if (env.useDemoData) return true;
-  return !isFirebaseConfigured();
+  if (isHostedProduction()) return false;
+  return env.useDemoData;
 }

@@ -11,11 +11,20 @@ import { doc, getDoc } from "firebase/firestore";
 import { getFirebaseAuth, getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { isDemoMode, isFirebaseConfigured } from "@/lib/env";
 import { AppError } from "@/utils/errors";
 import type { AdminRole, AdminUser } from "@/types";
 
 const SESSION_COOKIE = "hat_admin_session";
+
+function assertFirebaseReady(): void {
+  if (!isFirebaseConfigured()) {
+    throw new AppError(
+      "Firebase is not connected on this deployment. Add the NEXT_PUBLIC_FIREBASE_* variables in Vercel, then redeploy.",
+      "firebase_not_configured",
+    );
+  }
+}
 
 function setSessionCookie(value: string) {
   document.cookie = `${SESSION_COOKIE}=${value}; path=/; SameSite=Lax; max-age=${60 * 60 * 24 * 7}`;
@@ -42,6 +51,8 @@ export async function loginAdmin(email: string, password: string): Promise<Admin
     }
     throw new AppError("Invalid email or password.", "auth");
   }
+
+  assertFirebaseReady();
 
   const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
   const admin = await getAdminRecord(credential.user.uid);
@@ -70,8 +81,10 @@ export async function logoutAdmin(): Promise<void> {
 
 export async function resetAdminPassword(email: string): Promise<void> {
   if (isDemoMode()) {
-    throw new AppError("Password reset is not available in demo mode.", "demo");
+    throw new AppError("Password reset is only available on the production Firebase project.", "demo");
   }
+
+  assertFirebaseReady();
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   try {
@@ -87,16 +100,12 @@ export async function resetAdminPassword(email: string): Promise<void> {
 }
 
 export async function readPasswordResetEmail(oobCode: string): Promise<string> {
-  if (isDemoMode()) {
-    throw new AppError("Password reset is not available in demo mode.", "demo");
-  }
+  assertFirebaseReady();
   return verifyPasswordResetCode(getFirebaseAuth(), oobCode);
 }
 
 export async function completeAdminPasswordReset(oobCode: string, newPassword: string): Promise<void> {
-  if (isDemoMode()) {
-    throw new AppError("Password reset is not available in demo mode.", "demo");
-  }
+  assertFirebaseReady();
   await confirmPasswordReset(getFirebaseAuth(), oobCode, newPassword);
 }
 
