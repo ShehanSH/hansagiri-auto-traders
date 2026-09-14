@@ -1,5 +1,5 @@
 import { DEFAULT_PRIVACY, DEFAULT_SETTINGS, DEFAULT_TERMS } from "@/config/defaults";
-import { isDemoMode } from "@/lib/env";
+import { isDemoMode, isFirebaseConfigured } from "@/lib/env";
 import { getSettings as getSettingsBase } from "@/lib/services/settings";
 import type { SiteSettings } from "@/types";
 
@@ -13,7 +13,7 @@ function fallbackSettings(): SiteSettings {
 
 export async function getSettings(): Promise<SiteSettings> {
   try {
-    if (isDemoMode()) {
+    if (isDemoMode() && !isFirebaseConfigured()) {
       const { hydrateDemoSettingsFromDisk } = await import("@/lib/demo/persist-settings");
       hydrateDemoSettingsFromDisk();
     }

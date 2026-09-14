@@ -9,7 +9,7 @@ import { COLLECTIONS, SETTINGS_DOC_ID } from "@/lib/firebase/collections";
 import { getDb } from "@/lib/firebase/client";
 import { applyDemoSettings, getDemoSettingsMemory } from "@/lib/demo/settings-memory";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { isDemoMode, isFirebaseConfigured } from "@/lib/env";
 import type { SiteSettings } from "@/types";
 
 function withFallbacks(data: Partial<SiteSettings> | undefined): SiteSettings {
@@ -38,7 +38,7 @@ async function persistThroughApi(settings: SiteSettings): Promise<void> {
 
 export async function getSettings(): Promise<SiteSettings> {
   try {
-    if (isDemoMode()) {
+    if (isDemoMode() && !isFirebaseConfigured()) {
       if (typeof window !== "undefined") {
         const response = await fetch("/api/site-settings", { cache: "no-store" });
         if (!response.ok) throw new Error("Could not load settings");
@@ -57,8 +57,9 @@ export async function getSettings(): Promise<SiteSettings> {
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {
-  if (isDemoMode()) {
-    applyDemoSettings(settings);
+  applyDemoSettings(settings);
+
+  if (isDemoMode() && !isFirebaseConfigured()) {
     if (typeof window !== "undefined") {
       await persistThroughApi(settings);
     }
@@ -69,7 +70,11 @@ export async function saveSettings(settings: SiteSettings): Promise<void> {
     merge: true,
   });
   if (typeof window !== "undefined") {
-    await persistThroughApi(settings);
+    try {
+      await persistThroughApi(settings);
+    } catch (error) {
+      console.warn("Settings saved, but the public cache could not be refreshed", error);
+    }
   }
 }
 

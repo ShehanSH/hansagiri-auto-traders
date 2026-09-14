@@ -25,6 +25,6 @@ export async function persistDemoCrm(): Promise<void> {
     body: JSON.stringify(snapshotDemoCrm()),
   });
   if (!response.ok) {
-    throw new AppError("Could not save demo records.", "demo_sync_failed");
+    console.warn("Could not persist demo CRM snapshot");
   }
 }

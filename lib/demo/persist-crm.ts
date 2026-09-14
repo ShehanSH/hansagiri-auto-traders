@@ -47,8 +47,12 @@ export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
 
 export function persistDemoCrmToDisk(data: DemoCrmSnapshot = snapshotDemoCrm()): DemoCrmSnapshot {
   const next = structuredClone(data);
-  mkdirSync(path.dirname(FILE), { recursive: true });
-  writeFileSync(FILE, JSON.stringify(next, null, 2), "utf8");
   applyDemoCrm(next);
+  try {
+    mkdirSync(path.dirname(FILE), { recursive: true });
+    writeFileSync(FILE, JSON.stringify(next, null, 2), "utf8");
+  } catch {
+    // Vercel and other serverless hosts cannot write the project disk.
+  }
   return next;
 }

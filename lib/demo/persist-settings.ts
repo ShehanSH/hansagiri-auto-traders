@@ -42,8 +42,12 @@ export function hydrateDemoSettingsFromDisk(): SiteSettings {
 
 export function persistDemoSettingsToDisk(settings: SiteSettings): SiteSettings {
   const next = normalize(settings);
-  mkdirSync(path.dirname(FILE), { recursive: true });
-  writeFileSync(FILE, JSON.stringify(next, null, 2), "utf8");
+  try {
+    mkdirSync(path.dirname(FILE), { recursive: true });
+    writeFileSync(FILE, JSON.stringify(next, null, 2), "utf8");
+  } catch {
+    // Vercel and other serverless hosts cannot write the project disk.
+  }
   applyDemoSettings(next);
   return next;
 }
