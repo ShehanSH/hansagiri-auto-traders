@@ -92,7 +92,7 @@ export async function getAdminIdToken(): Promise<string | null> {
   if (!isFirebaseConfigured()) return null;
   const user = getFirebaseAuth().currentUser;
   if (!user) return null;
-  return user.getIdToken();
+  return user.getIdToken(true);
 }
 
 export async function logoutAdmin(): Promise<void> {

@@ -11,6 +11,7 @@ import { deleteBlobFile, uploadBlobFile } from "@/lib/storage/vercel-blob";
 import { AppError } from "@/utils/errors";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function readBearerToken(request: Request): string | null {
   const header = request.headers.get("authorization");
@@ -42,7 +43,10 @@ export async function POST(request: Request) {
       }
       const uid = await verifyAdminIdToken(idToken);
       if (!uid) {
-        return NextResponse.json({ error: "Not authorised." }, { status: 403 });
+        return NextResponse.json(
+          { error: "Not authorised to upload files. Sign in again and retry." },
+          { status: 403 },
+        );
       }
     }
 
