@@ -13,6 +13,7 @@ import {
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
+import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
 import { isDemoMode } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { customerDocId, upsertDemoCustomer } from "@/lib/services/customers-shared";
@@ -112,6 +113,7 @@ export async function listTradeIns(options: {
 }): Promise<PaginatedResult<TradeInRequest>> {
   let items: TradeInRequest[] = [];
   if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
     items = [...demoStore.tradeIns];
   } else {
     const snapshot = await getDocs(

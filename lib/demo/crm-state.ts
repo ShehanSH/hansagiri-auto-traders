@@ -29,6 +29,18 @@ export const EMPTY_DEMO_CRM: DemoCrmSnapshot = {
   activity: [],
 };
 
+export function isEmptyDemoCrm(data: DemoCrmSnapshot): boolean {
+  return (
+    data.messages.length === 0 &&
+    data.inquiries.length === 0 &&
+    data.customers.length === 0 &&
+    data.testDrives.length === 0 &&
+    data.tradeIns.length === 0 &&
+    data.financing.length === 0 &&
+    data.activity.length === 0
+  );
+}
+
 export function snapshotDemoCrm(): DemoCrmSnapshot {
   return {
     messages: structuredClone(demoStore.messages),

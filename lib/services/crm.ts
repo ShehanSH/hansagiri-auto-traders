@@ -38,7 +38,13 @@ export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">):
 }
 
 export async function listActivity(page = 1): Promise<PaginatedResult<ActivityLog>> {
-  if (isDemoMode()) return paginate(demoStore.activity, page, 30);
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    const items = [...demoStore.activity].sort(
+      (a, b) => +new Date(b.timestamp) - +new Date(a.timestamp),
+    );
+    return paginate(items, page, 30);
+  }
 
   const snapshot = await getDocs(
     query(

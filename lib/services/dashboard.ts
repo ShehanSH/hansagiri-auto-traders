@@ -10,12 +10,16 @@ import {
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
+import { isDemoAuth, isDemoMode } from "@/lib/env";
 import { listActivity } from "@/lib/services/crm";
 import type { ActivityLog, DashboardStats, Inquiry, Vehicle } from "@/types";
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  if (isDemoMode()) return demoStore.stats();
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    return demoStore.stats();
+  }
 
   const db = getDb();
   const [vehicles, inquiries, testDrives, tradeIns, messages] = await Promise.all([
@@ -47,7 +51,12 @@ export async function getRecentActivity(): Promise<ActivityLog[]> {
 }
 
 export async function getRecentInquiries(): Promise<Inquiry[]> {
-  if (isDemoMode()) return demoStore.inquiries.slice(0, 6);
+  if (isDemoMode()) {
+    await ensureDemoCrmLoaded();
+    return [...demoStore.inquiries]
+      .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+      .slice(0, 6);
+  }
 
   const snapshot = await getDocs(
     query(
@@ -76,7 +85,7 @@ export async function getRecentVehicles(): Promise<Vehicle[]> {
 }
 
 export async function getAdminProfile(uid: string) {
-  if (isDemoMode()) return demoStore.demoUser;
+  if (isDemoAuth()) return demoStore.demoUser;
   const snapshot = await getDoc(doc(getDb(), COLLECTIONS.admins, uid));
   if (!snapshot.exists()) return null;
   return snapshot.data();

@@ -1,4 +1,5 @@
 import { DEFAULT_PRIVACY, DEFAULT_SETTINGS, DEFAULT_TERMS } from "@/config/defaults";
+import { DEMO_CRM_SEED } from "@/lib/demo/crm-seed";
 import { DEMO_VEHICLES } from "@/lib/demo/vehicles";
 import type {
   ActivityLog,
@@ -21,13 +22,13 @@ function clone<T>(value: T): T {
 
 class DemoStore {
   vehicles: Vehicle[] = clone(DEMO_VEHICLES);
-  inquiries: Inquiry[] = [];
-  testDrives: TestDriveRequest[] = [];
-  tradeIns: TradeInRequest[] = [];
-  customers: Customer[] = [];
-  messages: ContactMessage[] = [];
-  financing: FinancingInquiry[] = [];
-  activity: ActivityLog[] = [];
+  inquiries: Inquiry[] = clone(DEMO_CRM_SEED.inquiries);
+  testDrives: TestDriveRequest[] = clone(DEMO_CRM_SEED.testDrives);
+  tradeIns: TradeInRequest[] = clone(DEMO_CRM_SEED.tradeIns);
+  customers: Customer[] = clone(DEMO_CRM_SEED.customers);
+  messages: ContactMessage[] = clone(DEMO_CRM_SEED.messages);
+  financing: FinancingInquiry[] = clone(DEMO_CRM_SEED.financing);
+  activity: ActivityLog[] = clone(DEMO_CRM_SEED.activity);
   media: MediaAsset[] = [];
   settings: SiteSettings = {
     ...clone(DEFAULT_SETTINGS),

@@ -1,9 +1,10 @@
 import "server-only";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { DEMO_CRM_SEED } from "@/lib/demo/crm-seed";
 import {
   applyDemoCrm,
-  EMPTY_DEMO_CRM,
+  isEmptyDemoCrm,
   snapshotDemoCrm,
   type DemoCrmSnapshot,
 } from "@/lib/demo/crm-state";
@@ -12,6 +13,10 @@ export type { DemoCrmSnapshot } from "@/lib/demo/crm-state";
 export { applyDemoCrm, snapshotDemoCrm } from "@/lib/demo/crm-state";
 
 const FILE = path.join(process.cwd(), ".demo", "crm.json");
+
+function seedSnapshot(): DemoCrmSnapshot {
+  return structuredClone(DEMO_CRM_SEED);
+}
 
 export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
   try {
@@ -26,15 +31,18 @@ export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
         financing: parsed.financing ?? [],
         activity: parsed.activity ?? [],
       };
-      applyDemoCrm(data);
-      return data;
+      if (!isEmptyDemoCrm(data)) {
+        applyDemoCrm(data);
+        return data;
+      }
     }
   } catch {
-    // Fall back to an empty CRM snapshot.
+    // Fall back to the bundled demo CRM.
   }
 
-  applyDemoCrm(EMPTY_DEMO_CRM);
-  return EMPTY_DEMO_CRM;
+  const seed = seedSnapshot();
+  applyDemoCrm(seed);
+  return seed;
 }
 
 export function persistDemoCrmToDisk(data: DemoCrmSnapshot = snapshotDemoCrm()): DemoCrmSnapshot {
