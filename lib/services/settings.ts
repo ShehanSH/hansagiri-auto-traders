@@ -37,18 +37,23 @@ async function persistThroughApi(settings: SiteSettings): Promise<void> {
 }
 
 export async function getSettings(): Promise<SiteSettings> {
-  if (isDemoMode()) {
-    if (typeof window !== "undefined") {
-      const response = await fetch("/api/site-settings", { cache: "no-store" });
-      if (!response.ok) throw new Error("Could not load settings");
-      return withFallbacks(await response.json());
+  try {
+    if (isDemoMode()) {
+      if (typeof window !== "undefined") {
+        const response = await fetch("/api/site-settings", { cache: "no-store" });
+        if (!response.ok) throw new Error("Could not load settings");
+        return withFallbacks(await response.json());
+      }
+      return getDemoSettingsMemory() ?? structuredClone(demoStore.settings);
     }
-    return getDemoSettingsMemory() ?? structuredClone(demoStore.settings);
-  }
 
-  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.settings, SETTINGS_DOC_ID));
-  if (!snapshot.exists()) return withFallbacks(undefined);
-  return withFallbacks(snapshot.data() as Partial<SiteSettings>);
+    const snapshot = await getDoc(doc(getDb(), COLLECTIONS.settings, SETTINGS_DOC_ID));
+    if (!snapshot.exists()) return withFallbacks(undefined);
+    return withFallbacks(snapshot.data() as Partial<SiteSettings>);
+  } catch (error) {
+    console.error("Failed to load site settings", error);
+    return withFallbacks(undefined);
+  }
 }
 
 export async function saveSettings(settings: SiteSettings): Promise<void> {

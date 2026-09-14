@@ -5,7 +5,7 @@ import {
   ReCaptchaV3Provider,
   type AppCheck,
 } from "firebase/app-check";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, type Firestore } from "firebase/firestore";
 import { env, isFirebaseConfigured } from "@/lib/env";
 
 let app: FirebaseApp | null = null;
@@ -50,7 +50,18 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getDb(): Firestore {
-  if (!db) db = getFirestore(getFirebaseApp());
+  if (!db) {
+    const app = getFirebaseApp();
+    if (typeof window === "undefined") {
+      try {
+        db = initializeFirestore(app, { experimentalForceLongPolling: true });
+      } catch {
+        db = getFirestore(app);
+      }
+    } else {
+      db = getFirestore(app);
+    }
+  }
   return db;
 }
 

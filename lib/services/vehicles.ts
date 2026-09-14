@@ -89,91 +89,90 @@ export async function listPublicVehicles(options: {
   page?: number;
   pageSize?: number;
 }): Promise<PaginatedResult<Vehicle>> {
-  const settings = await getSettings();
-  const page = options.page ?? 1;
-  const pageSize = options.pageSize ?? PAGE_SIZE;
-  const filters = options.filters ?? {};
-  const sort = options.sort ?? "newest";
+  try {
+    const settings = await getSettings();
+    const page = options.page ?? 1;
+    const pageSize = options.pageSize ?? PAGE_SIZE;
+    const filters = options.filters ?? {};
+    const sort = options.sort ?? "newest";
 
-  if (isDemoMode()) {
-    const visible = sortVehicles(
-      filterVehicles(demoStore.vehicles, filters, settings),
-      sort,
+    if (isDemoMode()) {
+      const visible = sortVehicles(
+        filterVehicles(demoStore.vehicles, filters, settings),
+        sort,
+      );
+      return paginate(visible, page, pageSize);
+    }
+
+    const statuses = publicStatuses(settings);
+    const snapshot = await getDocs(
+      query(
+        collection(getDb(), COLLECTIONS.vehicles),
+        where("status", "in", statuses.slice(0, 10)),
+        limit(120),
+      ),
     );
+    const vehicles = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Vehicle);
+    const visible = sortVehicles(filterVehicles(vehicles, filters, settings), sort);
     return paginate(visible, page, pageSize);
+  } catch (error) {
+    console.error("Failed to load vehicles", error);
+    return paginate([], options.page ?? 1, options.pageSize ?? PAGE_SIZE);
   }
-
-  const statuses = publicStatuses(settings);
-  const constraints = [where("status", "in", statuses.slice(0, 10))];
-
-  if (filters.make) constraints.push(where("make", "==", filters.make));
-  if (filters.model) constraints.push(where("model", "==", filters.model));
-  if (filters.vehicleType) {
-    constraints.push(where("vehicleType", "==", filters.vehicleType));
-  }
-  if (filters.fuelType) constraints.push(where("fuelType", "==", filters.fuelType));
-  if (filters.transmission) {
-    constraints.push(where("transmission", "==", filters.transmission));
-  }
-  if (filters.bodyType) constraints.push(where("bodyType", "==", filters.bodyType));
-
-  const order =
-    sort === "price_asc" || sort === "price_desc"
-      ? orderBy("price", sort === "price_asc" ? "asc" : "desc")
-      : sort === "year_desc"
-        ? orderBy("year", "desc")
-        : sort === "mileage_asc"
-          ? orderBy("mileage", "asc")
-          : orderBy("createdAt", "desc");
-
-  const snapshot = await getDocs(
-    query(collection(getDb(), COLLECTIONS.vehicles), ...constraints, order, limit(120)),
-  );
-  const vehicles = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Vehicle);
-  const visible = sortVehicles(filterVehicles(vehicles, filters, settings), sort);
-  return paginate(visible, page, pageSize);
 }
 
 export async function getFeaturedVehicles(): Promise<Vehicle[]> {
-  const settings = await getSettings();
-  const limitCount = settings.featuredLimit || 6;
+  try {
+    const settings = await getSettings();
+    const limitCount = settings.featuredLimit || 6;
 
-  if (isDemoMode()) {
-    return demoStore.vehicles
+    if (isDemoMode()) {
+      return demoStore.vehicles
+        .filter((item) => item.featured && isPubliclyVisible(item, settings))
+        .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+        .slice(0, limitCount);
+    }
+
+    const snapshot = await getDocs(
+      query(
+        collection(getDb(), COLLECTIONS.vehicles),
+        where("status", "in", publicStatuses(settings)),
+        limit(120),
+      ),
+    );
+    return snapshot.docs
+      .map((item) => ({ id: item.id, ...item.data() }) as Vehicle)
       .filter((item) => item.featured && isPubliclyVisible(item, settings))
       .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
       .slice(0, limitCount);
+  } catch (error) {
+    console.error("Failed to load featured vehicles", error);
+    return [];
   }
-
-  const snapshot = await getDocs(
-    query(
-      collection(getDb(), COLLECTIONS.vehicles),
-      where("featured", "==", true),
-      where("status", "in", publicStatuses(settings)),
-      orderBy("createdAt", "desc"),
-      limit(limitCount),
-    ),
-  );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Vehicle);
 }
 
 export async function getVehicleBySlug(slug: string): Promise<Vehicle | null> {
-  const settings = await getSettings();
+  try {
+    const settings = await getSettings();
 
-  if (isDemoMode()) {
-    const vehicle = demoStore.vehicles.find((item) => item.slug === slug) ?? null;
+    if (isDemoMode()) {
+      const vehicle = demoStore.vehicles.find((item) => item.slug === slug) ?? null;
+      if (!vehicle || !isPubliclyVisible(vehicle, settings)) return null;
+      return vehicle;
+    }
+
+    const snapshot = await getDocs(
+      query(collection(getDb(), COLLECTIONS.vehicles), where("slug", "==", slug), limit(1)),
+    );
+    const vehicle = snapshot.docs[0]
+      ? ({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Vehicle)
+      : null;
     if (!vehicle || !isPubliclyVisible(vehicle, settings)) return null;
     return vehicle;
+  } catch (error) {
+    console.error("Failed to load vehicle", error);
+    return null;
   }
-
-  const snapshot = await getDocs(
-    query(collection(getDb(), COLLECTIONS.vehicles), where("slug", "==", slug), limit(1)),
-  );
-  const vehicle = snapshot.docs[0]
-    ? ({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Vehicle)
-    : null;
-  if (!vehicle || !isPubliclyVisible(vehicle, settings)) return null;
-  return vehicle;
 }
 
 export async function getVehicleById(
