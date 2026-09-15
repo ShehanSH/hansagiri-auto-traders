@@ -77,6 +77,7 @@ export type InquirySource =
   | "contact"
   | "home"
   | "financing"
+  | "trade_in"
   | "other";
 
 export type VehicleFeature =

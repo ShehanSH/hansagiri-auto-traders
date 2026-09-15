@@ -111,6 +111,7 @@ export const INQUIRY_SOURCES: InquirySource[] = [
   "contact",
   "home",
   "financing",
+  "trade_in",
   "other",
 ];
 

@@ -1,22 +1,12 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
+import { clipMessage, createDocument, mapDocs } from "@/lib/firebase/documents";
 import { demoStore } from "@/lib/demo/store";
-import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
-import { isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
-import { customerDocId, upsertDemoCustomer } from "@/lib/services/customers-shared";
+import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
+import { loadCrmRecords } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -24,11 +14,40 @@ import { paginate } from "@/utils/vehicle-query";
 import type { TradeInInput } from "@/lib/validation/trade-in";
 import type {
   AdminNote,
+  Inquiry,
   PaginatedResult,
   TradeInRequest,
   TradeInStatus,
   VehicleImage,
 } from "@/types";
+
+function tradeInToInquiry(id: string, input: TradeInInput, customerId: string): Inquiry {
+  const timestamp = nowIso();
+  const label = `${input.year} ${input.make} ${input.model}`.trim();
+  return {
+    id,
+    name: input.name,
+    phone: input.phone,
+    whatsapp: input.phone,
+    email: input.email,
+    vehicleId: null,
+    vehicleLabel: label,
+    message: clipMessage(input.notes?.trim() || `Trade-in request for ${label}.`),
+    preferredContact: "phone",
+    preferredDate: "",
+    preferredTime: "",
+    source: "trade_in",
+    status: "new",
+    assignedStaff: "",
+    lastContact: "",
+    followUpDate: "",
+    notes: [],
+    customerId,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    archived: false,
+  };
+}
 
 function toTradeIn(
   id: string,
@@ -70,47 +89,54 @@ export async function submitTradeIn(
   if (!canSubmit(`tradein:${input.phone}`)) {
     throw new AppError("Please wait a moment before sending another request.", "rate_limited");
   }
-  const customerId = customerDocId(input.phone, input.email);
 
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  const customerId = customerDocId(input.phone, input.email);
+  const persistableImages = images.filter((image) => Boolean(image.url) && !image.url.startsWith("blob:"));
+
+  if (isMemoryCatalog()) {
     const request = toTradeIn(demoStore.id("ti"), input, customerId, images);
     demoStore.tradeIns.unshift(request);
+    const inquiry = tradeInToInquiry(demoStore.id("inq"), input, customerId);
+    demoStore.inquiries.unshift(inquiry);
     upsertDemoCustomer({
       name: input.name,
       phone: input.phone,
       email: input.email,
       tradeInId: request.id,
+      inquiryId: inquiry.id,
     });
     await notifyNewRecord("tradeIn", request.id);
+    await notifyNewRecord("inquiry", inquiry.id);
     return request.id;
   }
 
-  const ref = await addDoc(collection(getDb(), COLLECTIONS.tradeIns), {
-    ...toTradeIn("", input, customerId, images),
-    id: "",
-  });
-  await updateDoc(ref, { id: ref.id });
-  await setDoc(
-    doc(getDb(), COLLECTIONS.customers, customerId),
-    {
-      id: customerId,
-      name: input.name,
-      phone: input.phone,
-      email: input.email,
-      lastContact: nowIso(),
-      updatedAt: nowIso(),
-    },
-    { merge: true },
+  const tradeInId = await createDocument(
+    COLLECTIONS.tradeIns,
+    toTradeIn("", input, customerId, persistableImages),
   );
-  await notifyNewRecord("tradeIn", ref.id);
-  return ref.id;
+  let inquiryId = "";
+  try {
+    inquiryId = await createDocument(
+      COLLECTIONS.inquiries,
+      tradeInToInquiry("", input, customerId),
+    );
+  } catch (error) {
+    console.error("Could not copy trade-in into inquiries", error);
+  }
+  await upsertPublicCustomer({
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    tradeInId,
+    inquiryId: inquiryId || undefined,
+  });
+  await notifyNewRecord("tradeIn", tradeInId);
+  if (inquiryId) await notifyNewRecord("inquiry", inquiryId);
+  return tradeInId;
 }
 
-async function loadTradeIns(): Promise<TradeInRequest[]> {
-  if (isDemoMode()) {
-    await ensureDemoCrmLoaded();
-    return [...demoStore.tradeIns];
-  }
+async function fetchLiveTradeIns(): Promise<TradeInRequest[]> {
   const snapshot = await getDocs(
     query(
       collection(getDb(), COLLECTIONS.tradeIns),
@@ -118,7 +144,11 @@ async function loadTradeIns(): Promise<TradeInRequest[]> {
       limit(200),
     ),
   );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TradeInRequest);
+  return mapDocs<TradeInRequest>(snapshot);
+}
+
+async function loadTradeIns(): Promise<TradeInRequest[]> {
+  return loadCrmRecords(() => demoStore.tradeIns, fetchLiveTradeIns);
 }
 
 export async function listTradeIns(options: {
@@ -126,6 +156,7 @@ export async function listTradeIns(options: {
   make?: string;
   search?: string;
   page?: number;
+  pageSize?: number;
 }): Promise<PaginatedResult<TradeInRequest>> {
   const items = await loadTradeIns();
   const search = options.search?.trim().toLowerCase() ?? "";
@@ -135,7 +166,7 @@ export async function listTradeIns(options: {
     if (!search) return true;
     return [item.name, item.phone, item.make, item.model].join(" ").toLowerCase().includes(search);
   });
-  return paginate(filtered, options.page ?? 1, 20);
+  return paginate(filtered, options.page ?? 1, options.pageSize ?? 20);
 }
 
 export async function getTradeInFilterOptions(): Promise<{ makes: string[] }> {
@@ -146,10 +177,8 @@ export async function getTradeInFilterOptions(): Promise<{ makes: string[] }> {
 }
 
 export async function getTradeIn(id: string): Promise<TradeInRequest | null> {
-  if (isDemoMode()) return demoStore.tradeIns.find((item) => item.id === id) ?? null;
-  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.tradeIns, id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() } as TradeInRequest;
+  const items = await loadTradeIns();
+  return items.find((item) => item.id === id) ?? null;
 }
 
 export async function updateTradeIn(
@@ -158,7 +187,8 @@ export async function updateTradeIn(
     Pick<TradeInRequest, "status" | "valuationNotes" | "estimatedValuation">
   >,
 ): Promise<void> {
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     const item = demoStore.tradeIns.find((entry) => entry.id === id);
     if (!item) throw new AppError("Trade-in not found", "not_found");
     Object.assign(item, patch, { updatedAt: nowIso() });
@@ -177,7 +207,8 @@ export async function addTradeInNote(
   const item = await getTradeIn(id);
   if (!item) throw new AppError("Trade-in not found", "not_found");
   const adminNotes = [{ ...note, id: `n_${Date.now()}` }, ...item.adminNotes];
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     item.adminNotes = adminNotes;
     item.updatedAt = nowIso();
     return;

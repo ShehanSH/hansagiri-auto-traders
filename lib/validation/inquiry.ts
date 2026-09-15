@@ -20,7 +20,7 @@ export const inquirySchema = z.object({
   preferredDate: z.string().max(40).optional().default(""),
   preferredTime: z.string().max(40).optional().default(""),
   source: z
-    .enum(["vehicles", "vehicle_detail", "contact", "home", "financing", "other"])
+    .enum(["vehicles", "vehicle_detail", "contact", "home", "financing", "trade_in", "other"])
     .default("other"),
   company: honeypotSchema,
 });

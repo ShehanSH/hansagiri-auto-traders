@@ -1,27 +1,26 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
-  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
-  setDoc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
+import { createDocument, mapDocs } from "@/lib/firebase/documents";
 import { ensureDemoCrmLoaded, persistDemoCrm } from "@/lib/demo/sync-crm";
 import { demoStore } from "@/lib/demo/store";
-import { isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import {
   customerDocId,
   upsertDemoCustomer,
+  upsertPublicCustomer,
 } from "@/lib/services/customers-shared";
+import { loadCrmRecords } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -61,9 +60,10 @@ export async function submitInquiry(input: InquiryInput): Promise<string> {
     throw new AppError("Please wait a moment before sending another enquiry.", "rate_limited");
   }
 
+  await ensureFirebaseConfigured();
   const customerId = customerDocId(input.phone, input.email);
 
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     await ensureDemoCrmLoaded();
     const inquiry = toInquiry(demoStore.id("inq"), input, customerId);
     demoStore.inquiries.unshift(inquiry);
@@ -80,29 +80,27 @@ export async function submitInquiry(input: InquiryInput): Promise<string> {
     return inquiry.id;
   }
 
-  const db = getDb();
-  const inquiryRef = await addDoc(collection(db, COLLECTIONS.inquiries), {
-    ...toInquiry("", input, customerId),
-    id: "",
+  const inquiryId = await createDocument(COLLECTIONS.inquiries, toInquiry("", input, customerId));
+  await upsertPublicCustomer({
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    whatsapp: input.whatsapp || input.phone,
+    inquiryId,
   });
-  await updateDoc(inquiryRef, { id: inquiryRef.id });
-  await setDoc(
-    doc(db, COLLECTIONS.customers, customerId),
-    {
-      id: customerId,
-      name: input.name,
-      phone: input.phone,
-      email: input.email,
-      whatsapp: input.whatsapp || input.phone,
-      lastContact: nowIso(),
-      status: "new",
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-    },
-    { merge: true },
+  await notifyNewRecord("inquiry", inquiryId);
+  return inquiryId;
+}
+
+async function fetchLiveInquiries(): Promise<Inquiry[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(getDb(), COLLECTIONS.inquiries),
+      orderBy("createdAt", "desc"),
+      limit(200),
+    ),
   );
-  await notifyNewRecord("inquiry", inquiryRef.id);
-  return inquiryRef.id;
+  return mapDocs<Inquiry>(snapshot);
 }
 
 export async function listInquiries(options: {
@@ -114,21 +112,7 @@ export async function listInquiries(options: {
 }): Promise<PaginatedResult<Inquiry>> {
   const page = options.page ?? 1;
   const pageSize = options.pageSize ?? 20;
-
-  let items: Inquiry[] = [];
-  if (isDemoMode()) {
-    await ensureDemoCrmLoaded();
-    items = [...demoStore.inquiries];
-  } else {
-    const snapshot = await getDocs(
-      query(
-        collection(getDb(), COLLECTIONS.inquiries),
-        orderBy("createdAt", "desc"),
-        limit(200),
-      ),
-    );
-    items = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Inquiry);
-  }
+  const items = await loadCrmRecords(() => demoStore.inquiries, fetchLiveInquiries);
 
   const search = options.search?.trim().toLowerCase() ?? "";
   const filtered = items.filter((item) => {
@@ -146,17 +130,16 @@ export async function listInquiries(options: {
 }
 
 export async function getInquiry(id: string): Promise<Inquiry | null> {
-  if (isDemoMode()) return demoStore.inquiries.find((item) => item.id === id) ?? null;
-  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.inquiries, id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() } as Inquiry;
+  const items = await loadCrmRecords(() => demoStore.inquiries, fetchLiveInquiries);
+  return items.find((item) => item.id === id) ?? null;
 }
 
 export async function updateInquiry(
   id: string,
   patch: Partial<Pick<Inquiry, "status" | "assignedStaff" | "followUpDate" | "lastContact" | "archived">>,
 ): Promise<void> {
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     const inquiry = demoStore.inquiries.find((item) => item.id === id);
     if (!inquiry) throw new AppError("Enquiry not found", "not_found");
     Object.assign(inquiry, patch, { updatedAt: nowIso() });
@@ -175,7 +158,8 @@ export async function addInquiryNote(
   const inquiry = await getInquiry(id);
   if (!inquiry) throw new AppError("Enquiry not found", "not_found");
   const next = [{ ...note, id: `n_${Date.now()}` }, ...inquiry.notes];
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     inquiry.notes = next;
     inquiry.updatedAt = nowIso();
     return;
@@ -187,7 +171,8 @@ export async function addInquiryNote(
 }
 
 export async function deleteInquiry(id: string): Promise<void> {
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     demoStore.inquiries = demoStore.inquiries.filter((item) => item.id !== id);
     return;
   }
@@ -195,16 +180,6 @@ export async function deleteInquiry(id: string): Promise<void> {
 }
 
 export async function getInquiryByVehicle(vehicleId: string): Promise<Inquiry[]> {
-  if (isDemoMode()) {
-    return demoStore.inquiries.filter((item) => item.vehicleId === vehicleId);
-  }
-  const snapshot = await getDocs(
-    query(
-      collection(getDb(), COLLECTIONS.inquiries),
-      where("vehicleId", "==", vehicleId),
-      orderBy("createdAt", "desc"),
-      limit(50),
-    ),
-  );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as Inquiry);
+  const items = await loadCrmRecords(() => demoStore.inquiries, fetchLiveInquiries);
+  return items.filter((item) => item.vehicleId === vehicleId);
 }

@@ -76,10 +76,25 @@ service cloud.firestore {
     match /customers/{id} {
       allow create: if validString(request.resource.data.name, 80)
         && validString(request.resource.data.phone, 20);
-      allow update: if !signedIn()
+      allow update: if isAdmin() || (
+        !signedIn()
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['interestedVehicles', 'inquiryIds', 'testDriveIds', 'tradeInIds', 'updatedAt', 'lastContact', 'whatsapp']);
-      allow read, update, delete: if isAdmin();
+          .hasOnly([
+            'name',
+            'phone',
+            'email',
+            'whatsapp',
+            'interestedVehicles',
+            'inquiryIds',
+            'testDriveIds',
+            'tradeInIds',
+            'updatedAt',
+            'lastContact',
+            'status',
+            'createdAt',
+          ])
+      );
+      allow read, delete: if isAdmin();
     }
 
     match /admins/{uid} {

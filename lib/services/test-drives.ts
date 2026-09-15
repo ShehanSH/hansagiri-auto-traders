@@ -1,22 +1,12 @@
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
+import { createDocument, mapDocs } from "@/lib/firebase/documents";
 import { demoStore } from "@/lib/demo/store";
-import { ensureDemoCrmLoaded } from "@/lib/demo/sync-crm";
-import { isDemoMode } from "@/lib/env";
+import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
-import { customerDocId, upsertDemoCustomer } from "@/lib/services/customers-shared";
+import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
+import { loadCrmRecords } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -49,9 +39,11 @@ export async function submitTestDrive(input: TestDriveInput): Promise<string> {
   if (!canSubmit(`testdrive:${input.phone}`)) {
     throw new AppError("Please wait a moment before sending another request.", "rate_limited");
   }
+
+  await ensureFirebaseConfigured();
   const customerId = customerDocId(input.phone, input.email);
 
-  if (isDemoMode()) {
+  if (isMemoryCatalog()) {
     const request = toRequest(demoStore.id("td"), input, customerId);
     demoStore.testDrives.unshift(request);
     upsertDemoCustomer({
@@ -66,33 +58,19 @@ export async function submitTestDrive(input: TestDriveInput): Promise<string> {
     return request.id;
   }
 
-  const ref = await addDoc(collection(getDb(), COLLECTIONS.testDrives), {
-    ...toRequest("", input, customerId),
-    id: "",
+  const testDriveId = await createDocument(COLLECTIONS.testDrives, toRequest("", input, customerId));
+  await upsertPublicCustomer({
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    whatsapp: input.whatsapp || input.phone,
+    testDriveId,
   });
-  await updateDoc(ref, { id: ref.id });
-  await setDoc(
-    doc(getDb(), COLLECTIONS.customers, customerId),
-    {
-      id: customerId,
-      name: input.name,
-      phone: input.phone,
-      email: input.email,
-      whatsapp: input.whatsapp || input.phone,
-      lastContact: nowIso(),
-      updatedAt: nowIso(),
-    },
-    { merge: true },
-  );
-  await notifyNewRecord("testDrive", ref.id);
-  return ref.id;
+  await notifyNewRecord("testDrive", testDriveId);
+  return testDriveId;
 }
 
-async function loadTestDrives(): Promise<TestDriveRequest[]> {
-  if (isDemoMode()) {
-    await ensureDemoCrmLoaded();
-    return [...demoStore.testDrives];
-  }
+async function fetchLiveTestDrives(): Promise<TestDriveRequest[]> {
   const snapshot = await getDocs(
     query(
       collection(getDb(), COLLECTIONS.testDrives),
@@ -100,7 +78,11 @@ async function loadTestDrives(): Promise<TestDriveRequest[]> {
       limit(200),
     ),
   );
-  return snapshot.docs.map((item) => ({ id: item.id, ...item.data() }) as TestDriveRequest);
+  return mapDocs<TestDriveRequest>(snapshot);
+}
+
+async function loadTestDrives(): Promise<TestDriveRequest[]> {
+  return loadCrmRecords(() => demoStore.testDrives, fetchLiveTestDrives);
 }
 
 export async function listTestDrives(options: {
@@ -108,6 +90,7 @@ export async function listTestDrives(options: {
   vehicle?: string;
   search?: string;
   page?: number;
+  pageSize?: number;
 }): Promise<PaginatedResult<TestDriveRequest>> {
   const items = await loadTestDrives();
   const search = options.search?.trim().toLowerCase() ?? "";
@@ -117,7 +100,7 @@ export async function listTestDrives(options: {
     if (!search) return true;
     return [item.name, item.phone, item.vehicleLabel].join(" ").toLowerCase().includes(search);
   });
-  return paginate(filtered, options.page ?? 1, 20);
+  return paginate(filtered, options.page ?? 1, options.pageSize ?? 20);
 }
 
 export async function getTestDriveFilterOptions(): Promise<{ vehicles: string[] }> {
@@ -128,17 +111,16 @@ export async function getTestDriveFilterOptions(): Promise<{ vehicles: string[] 
 }
 
 export async function getTestDrive(id: string): Promise<TestDriveRequest | null> {
-  if (isDemoMode()) return demoStore.testDrives.find((item) => item.id === id) ?? null;
-  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.testDrives, id));
-  if (!snapshot.exists()) return null;
-  return { id: snapshot.id, ...snapshot.data() } as TestDriveRequest;
+  const items = await loadTestDrives();
+  return items.find((item) => item.id === id) ?? null;
 }
 
 export async function updateTestDriveStatus(
   id: string,
   status: TestDriveStatus,
 ): Promise<void> {
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     const item = demoStore.testDrives.find((entry) => entry.id === id);
     if (!item) throw new AppError("Request not found", "not_found");
     item.status = status;
@@ -158,7 +140,8 @@ export async function addTestDriveNote(
   const item = await getTestDrive(id);
   if (!item) throw new AppError("Request not found", "not_found");
   const notes = [{ ...note, id: `n_${Date.now()}` }, ...item.notes];
-  if (isDemoMode()) {
+  await ensureFirebaseConfigured();
+  if (isMemoryCatalog()) {
     item.notes = notes;
     item.updatedAt = nowIso();
     return;

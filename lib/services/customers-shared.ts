@@ -1,6 +1,9 @@
+import { arrayUnion, doc, setDoc } from "firebase/firestore";
+import { getDb } from "@/lib/firebase/client";
+import { COLLECTIONS } from "@/lib/firebase/collections";
 import { demoStore } from "@/lib/demo/store";
-import { normalizePhoneKey } from "@/utils/phone";
 import { nowIso } from "@/lib/firebase/timestamps";
+import { normalizePhoneKey } from "@/utils/phone";
 import type { AdminNote, Customer, CustomerStatus } from "@/types";
 
 export function customerDocId(phone: string, email: string): string {
@@ -60,6 +63,41 @@ export function upsertDemoCustomer(input: {
   existing.updatedAt = timestamp;
   if (existing.status === "new") existing.status = "active";
   return existing;
+}
+
+export async function upsertPublicCustomer(input: {
+  name: string;
+  phone: string;
+  email: string;
+  whatsapp?: string;
+  inquiryId?: string;
+  testDriveId?: string;
+  tradeInId?: string;
+}): Promise<string> {
+  const id = customerDocId(input.phone, input.email);
+  const timestamp = nowIso();
+  try {
+    await setDoc(
+      doc(getDb(), COLLECTIONS.customers, id),
+      {
+        id,
+        name: input.name,
+        phone: input.phone,
+        email: input.email,
+        whatsapp: input.whatsapp || input.phone,
+        lastContact: timestamp,
+        status: "new",
+        updatedAt: timestamp,
+        ...(input.inquiryId ? { inquiryIds: arrayUnion(input.inquiryId) } : {}),
+        ...(input.testDriveId ? { testDriveIds: arrayUnion(input.testDriveId) } : {}),
+        ...(input.tradeInId ? { tradeInIds: arrayUnion(input.tradeInId) } : {}),
+      },
+      { merge: true },
+    );
+  } catch (error) {
+    console.error("Could not save customer lead", error);
+  }
+  return id;
 }
 
 export function appendNote(
