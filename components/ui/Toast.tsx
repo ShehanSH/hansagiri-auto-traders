@@ -30,8 +30,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             className={`border px-4 py-3 text-sm ${
               toast.tone === "error"
-                ? "border-danger/40 bg-charcoal text-white"
-                : "border-gold/30 bg-charcoal text-gold-champagne"
+                ? "border-danger/40 bg-danger/15 text-[#f3c5c5]"
+                : "border-success/40 bg-success/15 text-[#c7ead8]"
             }`}
             role="status"
           >
