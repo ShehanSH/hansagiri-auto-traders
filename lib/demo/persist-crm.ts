@@ -5,6 +5,7 @@ import { DEMO_CRM_SEED } from "@/lib/demo/crm-seed";
 import {
   applyDemoCrm,
   isEmptyDemoCrm,
+  mergeDemoCrmSeed,
   snapshotDemoCrm,
   type DemoCrmSnapshot,
 } from "@/lib/demo/crm-state";
@@ -32,8 +33,9 @@ export function hydrateDemoCrmFromDisk(): DemoCrmSnapshot {
         activity: parsed.activity ?? [],
       };
       if (!isEmptyDemoCrm(data)) {
-        applyDemoCrm(data);
-        return data;
+        const merged = mergeDemoCrmSeed(data);
+        applyDemoCrm(merged);
+        return merged;
       }
     }
   } catch {

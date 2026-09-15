@@ -1,4 +1,10 @@
-import { applyDemoCrm, isEmptyDemoCrm, snapshotDemoCrm, type DemoCrmSnapshot } from "@/lib/demo/crm-state";
+import {
+  applyDemoCrm,
+  isEmptyDemoCrm,
+  mergeDemoCrmSeed,
+  snapshotDemoCrm,
+  type DemoCrmSnapshot,
+} from "@/lib/demo/crm-state";
 import { isDemoMode } from "@/lib/env";
 import { AppError } from "@/utils/errors";
 
@@ -12,7 +18,7 @@ export async function ensureDemoCrmLoaded(): Promise<void> {
     throw new AppError("Could not load demo records.", "demo_sync_failed");
   }
   const data = (await response.json()) as DemoCrmSnapshot;
-  if (!isEmptyDemoCrm(data)) applyDemoCrm(data);
+  if (!isEmptyDemoCrm(data)) applyDemoCrm(mergeDemoCrmSeed(data));
 }
 
 export async function persistDemoCrm(): Promise<void> {

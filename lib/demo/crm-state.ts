@@ -1,3 +1,4 @@
+import { DEMO_CRM_SEED } from "@/lib/demo/crm-seed";
 import { demoStore } from "@/lib/demo/store";
 import type {
   ActivityLog,
@@ -61,4 +62,21 @@ export function applyDemoCrm(data: DemoCrmSnapshot): void {
   demoStore.tradeIns = structuredClone(data.tradeIns);
   demoStore.financing = structuredClone(data.financing);
   demoStore.activity = structuredClone(data.activity);
+}
+
+function mergeById<T extends { id: string }>(seed: T[], persisted: T[]): T[] {
+  const ids = new Set(persisted.map((item) => item.id));
+  return [...persisted, ...seed.filter((item) => !ids.has(item.id))];
+}
+
+export function mergeDemoCrmSeed(data: DemoCrmSnapshot): DemoCrmSnapshot {
+  return {
+    messages: mergeById(DEMO_CRM_SEED.messages, data.messages),
+    inquiries: mergeById(DEMO_CRM_SEED.inquiries, data.inquiries),
+    customers: mergeById(DEMO_CRM_SEED.customers, data.customers),
+    testDrives: mergeById(DEMO_CRM_SEED.testDrives, data.testDrives),
+    tradeIns: mergeById(DEMO_CRM_SEED.tradeIns, data.tradeIns),
+    financing: mergeById(DEMO_CRM_SEED.financing, data.financing),
+    activity: mergeById(DEMO_CRM_SEED.activity, data.activity),
+  };
 }
