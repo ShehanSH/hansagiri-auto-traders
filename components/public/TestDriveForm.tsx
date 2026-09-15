@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Honeypot, Input, Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
@@ -8,6 +8,12 @@ import { testDriveSchema } from "@/lib/validation/test-drive";
 import { submitTestDrive } from "@/lib/services/test-drives";
 import { toUserMessage } from "@/utils/errors";
 import { hasClientCooldown, isHoneypotFilled, markClientCooldown } from "@/utils/spam";
+
+function todayLocalDate() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  return new Date(now.getTime() - offset * 60_000).toISOString().slice(0, 10);
+}
 
 export function TestDriveForm({
   vehicleId = "",
@@ -19,6 +25,7 @@ export function TestDriveForm({
   const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const minDate = useMemo(() => todayLocalDate(), []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -64,8 +71,23 @@ export function TestDriveForm({
       <Input name="vehicleLabel" label="Vehicle" defaultValue={vehicleLabel} />
       <input type="hidden" name="vehicleId" defaultValue={vehicleId} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input name="preferredDate" type="date" label="Preferred date" required error={errors.preferredDate} />
-        <Input name="preferredTime" type="time" label="Preferred time" required error={errors.preferredTime} />
+        <Input
+          name="preferredDate"
+          type="date"
+          label="Preferred date"
+          min={minDate}
+          required
+          error={errors.preferredDate}
+          hint="Open the calendar to choose a day"
+        />
+        <Input
+          name="preferredTime"
+          type="time"
+          label="Preferred time"
+          required
+          error={errors.preferredTime}
+          hint="Open the clock to choose a time"
+        />
       </div>
       <Textarea name="message" label="Message" error={errors.message} />
       <Button type="submit" loading={loading} className="w-full">

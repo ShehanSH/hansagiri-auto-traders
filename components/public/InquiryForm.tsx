@@ -85,8 +85,18 @@ export function InquiryForm({
         <option value="email">Email</option>
       </Select>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Input name="preferredDate" type="date" label="Preferred date (optional)" />
-        <Input name="preferredTime" type="time" label="Preferred time (optional)" />
+        <Input
+          name="preferredDate"
+          type="date"
+          label="Preferred date (optional)"
+          hint="Open the calendar to choose a day"
+        />
+        <Input
+          name="preferredTime"
+          type="time"
+          label="Preferred time (optional)"
+          hint="Open the clock to choose a time"
+        />
       </div>
       <Textarea name="message" label="Message" required error={errors.message} />
       <Button type="submit" loading={loading} className="w-full">
