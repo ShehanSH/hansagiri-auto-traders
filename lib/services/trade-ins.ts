@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { clipMessage, createDocument, mapDocs } from "@/lib/firebase/documents";
@@ -6,7 +6,7 @@ import { demoStore } from "@/lib/demo/store";
 import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -196,20 +196,11 @@ export async function getTradeIn(id: string): Promise<TradeInRequest | null> {
 export async function updateTradeIn(
   id: string,
   patch: Partial<
-    Pick<TradeInRequest, "status" | "valuationNotes" | "estimatedValuation">
+    Pick<TradeInRequest, "status" | "valuationNotes" | "estimatedValuation" | "adminNotes">
   >,
 ): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    const item = demoStore.tradeIns.find((entry) => entry.id === id);
-    if (!item) throw new AppError("Trade-in not found", "not_found");
-    Object.assign(item, patch, { updatedAt: nowIso() });
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.tradeIns, id), {
-    ...patch,
-    updatedAt: nowIso(),
-  });
+  const current = await getTradeIn(id);
+  await saveCrmRecord(COLLECTIONS.tradeIns, id, patch, demoStore.tradeIns, current);
 }
 
 export async function addTradeInNote(
@@ -219,14 +210,5 @@ export async function addTradeInNote(
   const item = await getTradeIn(id);
   if (!item) throw new AppError("Trade-in not found", "not_found");
   const adminNotes = [{ ...note, id: `n_${Date.now()}` }, ...(item.adminNotes ?? [])];
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    item.adminNotes = adminNotes;
-    item.updatedAt = nowIso();
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.tradeIns, id), {
-    adminNotes,
-    updatedAt: nowIso(),
-  });
+  await updateTradeIn(id, { adminNotes });
 }

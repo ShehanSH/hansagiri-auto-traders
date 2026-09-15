@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { createDocument, mapDocs } from "@/lib/firebase/documents";
@@ -6,7 +6,7 @@ import { demoStore } from "@/lib/demo/store";
 import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -128,18 +128,8 @@ export async function updateTestDriveStatus(
   id: string,
   status: TestDriveStatus,
 ): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    const item = demoStore.testDrives.find((entry) => entry.id === id);
-    if (!item) throw new AppError("Request not found", "not_found");
-    item.status = status;
-    item.updatedAt = nowIso();
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.testDrives, id), {
-    status,
-    updatedAt: nowIso(),
-  });
+  const current = await getTestDrive(id);
+  await saveCrmRecord(COLLECTIONS.testDrives, id, { status }, demoStore.testDrives, current);
 }
 
 export async function addTestDriveNote(
@@ -149,14 +139,6 @@ export async function addTestDriveNote(
   const item = await getTestDrive(id);
   if (!item) throw new AppError("Request not found", "not_found");
   const notes = [{ ...note, id: `n_${Date.now()}` }, ...(item.notes ?? [])];
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    item.notes = notes;
-    item.updatedAt = nowIso();
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.testDrives, id), {
-    notes,
-    updatedAt: nowIso(),
-  });
+  const current = { ...item, notes };
+  await saveCrmRecord(COLLECTIONS.testDrives, id, { notes }, demoStore.testDrives, current);
 }

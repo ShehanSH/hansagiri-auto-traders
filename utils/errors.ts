@@ -16,6 +16,9 @@ export function toUserMessage(error: unknown): string {
     if (code === "permission-denied") {
       return "You do not have permission to complete this action.";
     }
+    if (code === "not-found") {
+      return "This record could not be updated. Refresh the page and try again.";
+    }
     if (code === "unavailable" || code === "network-request-failed") {
       return "We could not reach the server. Please check your connection and try again.";
     }

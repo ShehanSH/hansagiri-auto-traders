@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeCrmById, sortByCreatedAtDesc } from "@/lib/services/crm-live";
+import { mergeCrmById, sortByCreatedAtDesc, isNotFoundError } from "@/lib/services/crm-live";
 import { normalizeCustomer } from "@/lib/services/customers-shared";
 
 describe("CRM live merge", () => {
@@ -21,6 +21,14 @@ describe("CRM live merge", () => {
       { id: "new", createdAt: "2026-03-01T00:00:00.000Z" },
     ]);
     expect(sorted.map((item) => item.id)).toEqual(["new", "old"]);
+  });
+});
+
+describe("isNotFoundError", () => {
+  it("detects Firestore missing-document errors", async () => {
+    const { FirebaseError } = await import("firebase/app");
+    expect(isNotFoundError(new FirebaseError("not-found", "missing"))).toBe(true);
+    expect(isNotFoundError(new Error("missing"))).toBe(false);
   });
 });
 

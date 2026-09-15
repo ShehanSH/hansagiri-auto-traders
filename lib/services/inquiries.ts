@@ -6,7 +6,6 @@ import {
   limit,
   orderBy,
   query,
-  updateDoc,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
@@ -20,7 +19,7 @@ import {
   upsertDemoCustomer,
   upsertPublicCustomer,
 } from "@/lib/services/customers-shared";
-import { loadCrmRecords } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -136,19 +135,10 @@ export async function getInquiry(id: string): Promise<Inquiry | null> {
 
 export async function updateInquiry(
   id: string,
-  patch: Partial<Pick<Inquiry, "status" | "assignedStaff" | "followUpDate" | "lastContact" | "archived">>,
+  patch: Partial<Pick<Inquiry, "status" | "assignedStaff" | "followUpDate" | "lastContact" | "archived" | "notes">>,
 ): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    const inquiry = demoStore.inquiries.find((item) => item.id === id);
-    if (!inquiry) throw new AppError("Enquiry not found", "not_found");
-    Object.assign(inquiry, patch, { updatedAt: nowIso() });
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.inquiries, id), {
-    ...patch,
-    updatedAt: nowIso(),
-  });
+  const current = await getInquiry(id);
+  await saveCrmRecord(COLLECTIONS.inquiries, id, patch, demoStore.inquiries, current);
 }
 
 export async function addInquiryNote(
@@ -157,17 +147,8 @@ export async function addInquiryNote(
 ): Promise<void> {
   const inquiry = await getInquiry(id);
   if (!inquiry) throw new AppError("Enquiry not found", "not_found");
-  const next = [{ ...note, id: `n_${Date.now()}` }, ...inquiry.notes];
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    inquiry.notes = next;
-    inquiry.updatedAt = nowIso();
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.inquiries, id), {
-    notes: next,
-    updatedAt: nowIso(),
-  });
+  const notes = [{ ...note, id: `n_${Date.now()}` }, ...(inquiry.notes ?? [])];
+  await updateInquiry(id, { notes });
 }
 
 export async function deleteInquiry(id: string): Promise<void> {

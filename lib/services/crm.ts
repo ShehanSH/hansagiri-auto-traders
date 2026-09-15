@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   doc,
   getDoc,
@@ -7,7 +6,6 @@ import {
   limit,
   orderBy,
   query,
-  updateDoc,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
@@ -18,7 +16,8 @@ import { nowIso } from "@/lib/firebase/timestamps";
 import { paginate } from "@/utils/vehicle-query";
 import type { ActivityLog, Customer, CustomerStatus, PaginatedResult } from "@/types";
 import { appendNote, normalizeCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
+import { createDocument } from "@/lib/firebase/documents";
 
 export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">): Promise<void> {
   const entry: ActivityLog = {
@@ -34,8 +33,7 @@ export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">):
     return;
   }
 
-  const ref = await addDoc(collection(getDb(), COLLECTIONS.activityLogs), entry);
-  await updateDoc(ref, { id: ref.id });
+  await createDocument(COLLECTIONS.activityLogs, entry);
 }
 
 export async function listActivity(page = 1): Promise<PaginatedResult<ActivityLog>> {
@@ -108,19 +106,10 @@ export async function getCustomer(id: string): Promise<Customer | null> {
 
 export async function updateCustomer(
   id: string,
-  patch: Partial<Pick<Customer, "status" | "name" | "email" | "whatsapp">>,
+  patch: Partial<Pick<Customer, "status" | "name" | "email" | "whatsapp" | "notes">>,
 ): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    const item = demoStore.customers.find((entry) => entry.id === id);
-    if (!item) return;
-    Object.assign(item, patch, { updatedAt: nowIso() });
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.customers, id), {
-    ...patch,
-    updatedAt: nowIso(),
-  });
+  const current = await getCustomer(id);
+  await saveCrmRecord(COLLECTIONS.customers, id, patch, demoStore.customers, current);
 }
 
 export async function addCustomerNote(
@@ -132,14 +121,5 @@ export async function addCustomerNote(
   const customer = await getCustomer(id);
   if (!customer) return;
   const notes = appendNote(customer.notes ?? [], body, userId, userName);
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    customer.notes = notes;
-    customer.updatedAt = nowIso();
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.customers, id), {
-    notes,
-    updatedAt: nowIso(),
-  });
+  await updateCustomer(id, { notes });
 }
