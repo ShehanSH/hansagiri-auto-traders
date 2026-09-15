@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { mergeCrmById, sortByCreatedAtDesc } from "@/lib/services/crm-live";
+import { normalizeCustomer } from "@/lib/services/customers-shared";
 
 describe("CRM live merge", () => {
   it("keeps live records and demo records that are not already live", () => {
@@ -20,5 +21,21 @@ describe("CRM live merge", () => {
       { id: "new", createdAt: "2026-03-01T00:00:00.000Z" },
     ]);
     expect(sorted.map((item) => item.id)).toEqual(["new", "old"]);
+  });
+});
+
+describe("normalizeCustomer", () => {
+  it("fills missing arrays so the admin customer page can render", () => {
+    const customer = normalizeCustomer({
+      id: "c_0771234567",
+      name: "Shehan Hashen",
+      phone: "0766650952",
+    });
+
+    expect(customer.inquiryIds).toEqual([]);
+    expect(customer.testDriveIds).toEqual([]);
+    expect(customer.tradeInIds).toEqual([]);
+    expect(customer.notes).toEqual([]);
+    expect(customer.status).toBe("new");
   });
 });

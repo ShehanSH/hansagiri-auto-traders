@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -16,7 +17,7 @@ import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { paginate } from "@/utils/vehicle-query";
 import type { ActivityLog, Customer, CustomerStatus, PaginatedResult } from "@/types";
-import { appendNote } from "@/lib/services/customers-shared";
+import { appendNote, normalizeCustomer } from "@/lib/services/customers-shared";
 import { loadCrmRecords } from "@/lib/services/crm-live";
 
 export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">): Promise<void> {
@@ -68,7 +69,9 @@ async function fetchLiveCustomers(): Promise<Customer[]> {
       limit(200),
     ),
   );
-  return snapshot.docs.map((item) => ({ ...item.data(), id: item.id }) as Customer);
+  return snapshot.docs.map((item) =>
+    normalizeCustomer({ ...item.data(), id: item.id } as Partial<Customer> & { id: string }),
+  );
 }
 
 export async function listCustomers(options: {
@@ -77,7 +80,9 @@ export async function listCustomers(options: {
   activity?: CustomerActivityFilter;
   page?: number;
 }): Promise<PaginatedResult<Customer>> {
-  const items = await loadCrmRecords(() => demoStore.customers, fetchLiveCustomers);
+  const items = (await loadCrmRecords(() => demoStore.customers, fetchLiveCustomers)).map(
+    normalizeCustomer,
+  );
   const search = options.search?.trim().toLowerCase() ?? "";
   const filtered = items.filter((item) => {
     if (options.status && item.status !== options.status) return false;
@@ -92,7 +97,13 @@ export async function listCustomers(options: {
 
 export async function getCustomer(id: string): Promise<Customer | null> {
   const items = await loadCrmRecords(() => demoStore.customers, fetchLiveCustomers);
-  return items.find((item) => item.id === id) ?? null;
+  const found = items.find((item) => item.id === id);
+  if (found) return normalizeCustomer(found);
+
+  if (isMemoryCatalog()) return null;
+  const snapshot = await getDoc(doc(getDb(), COLLECTIONS.customers, id));
+  if (!snapshot.exists()) return null;
+  return normalizeCustomer({ ...snapshot.data(), id: snapshot.id } as Partial<Customer> & { id: string });
 }
 
 export async function updateCustomer(

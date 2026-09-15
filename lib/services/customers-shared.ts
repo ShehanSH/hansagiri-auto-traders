@@ -12,6 +12,25 @@ export function customerDocId(phone: string, email: string): string {
   return `c_${email.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
 }
 
+export function normalizeCustomer(item: Partial<Customer> & { id: string }): Customer {
+  return {
+    id: item.id,
+    name: item.name ?? "",
+    phone: item.phone ?? "",
+    email: item.email ?? "",
+    whatsapp: item.whatsapp ?? item.phone ?? "",
+    interestedVehicles: item.interestedVehicles ?? [],
+    inquiryIds: item.inquiryIds ?? [],
+    testDriveIds: item.testDriveIds ?? [],
+    tradeInIds: item.tradeInIds ?? [],
+    notes: item.notes ?? [],
+    lastContact: item.lastContact ?? item.updatedAt ?? item.createdAt ?? "",
+    status: item.status ?? "new",
+    createdAt: item.createdAt ?? item.updatedAt ?? "",
+    updatedAt: item.updatedAt ?? item.createdAt ?? "",
+  };
+}
+
 export function upsertDemoCustomer(input: {
   name: string;
   phone: string;
