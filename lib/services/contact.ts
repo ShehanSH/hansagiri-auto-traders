@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { COLLECTIONS } from "@/lib/firebase/collections";
 import { clipMessage, createDocument, mapDocs } from "@/lib/firebase/documents";
@@ -12,7 +12,7 @@ import {
   upsertDemoCustomer,
   upsertPublicCustomer,
 } from "@/lib/services/customers-shared";
-import { loadCrmRecords, deleteCrmRecord } from "@/lib/services/crm-live";
+import { loadCrmRecords, deleteCrmRecord, saveCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -169,21 +169,14 @@ export async function getMessage(id: string): Promise<ContactMessage | null> {
 }
 
 export async function markMessageRead(id: string): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
-    await ensureDemoCrmLoaded();
-    const item = demoStore.messages.find((entry) => entry.id === id);
-    if (item) {
-      item.status = "read";
-      item.updatedAt = nowIso();
-      await persistDemoCrm();
-    }
-    return;
-  }
-  await updateDoc(doc(getDb(), COLLECTIONS.contactMessages, id), {
-    status: "read",
-    updatedAt: nowIso(),
-  });
+  const current = await getMessage(id);
+  await saveCrmRecord(
+    COLLECTIONS.contactMessages,
+    id,
+    { status: "read" },
+    demoStore.messages,
+    current,
+  );
 }
 
 export async function deleteMessage(id: string): Promise<void> {
