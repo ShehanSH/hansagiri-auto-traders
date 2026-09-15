@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { TEST_DRIVE_STATUSES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { addTestDriveNote, getTestDrive, updateTestDriveStatus } from "@/lib/services/test-drives";
+import { addTestDriveNote, deleteTestDrive, getTestDrive, updateTestDriveStatus } from "@/lib/services/test-drives";
 import { logActivity } from "@/lib/services/crm";
 import { formatDateTime, statusLabel } from "@/utils/format";
 import { toUserMessage } from "@/utils/errors";
@@ -16,6 +17,7 @@ import type { TestDriveRequest, TestDriveStatus } from "@/types";
 
 export default function TestDriveDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const toast = useToast();
   const { admin } = useAdminAuth();
   const [item, setItem] = useState<TestDriveRequest | null>(null);
@@ -74,7 +76,16 @@ export default function TestDriveDetailPage() {
     <div className="max-w-3xl space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">{item.name}</h1>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status} />
+          <DeleteRecordButton
+            title="Delete this test drive?"
+            onDelete={async () => {
+              await deleteTestDrive(item.id);
+              router.push("/admin/test-drives");
+            }}
+          />
+        </div>
       </div>
       <p className="text-sm text-muted">
         {item.vehicleLabel} · {item.preferredDate} {item.preferredTime}

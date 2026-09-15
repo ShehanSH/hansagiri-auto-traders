@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { Input, Select } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { listMessages, markMessageRead } from "@/lib/services/contact";
+import { deleteMessage, listMessages, markMessageRead } from "@/lib/services/contact";
 import { formatDateTime, statusLabel } from "@/utils/format";
 import type { ContactMessage, PaginatedResult } from "@/types";
 
@@ -17,11 +18,12 @@ export default function MessagesPage() {
   const [status, setStatus] = useState<ContactMessage["status"] | "">("");
   const [result, setResult] = useState<PaginatedResult<ContactMessage> | null>(null);
   const [open, setOpen] = useState<ContactMessage | null>(null);
+  const [reload, setReload] = useState(0);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
     listMessages({ page, search: debouncedSearch, status }).then(setResult);
-  }, [page, debouncedSearch, status]);
+  }, [page, debouncedSearch, status, reload]);
 
   const filtered = Boolean(debouncedSearch || status);
 
@@ -57,23 +59,32 @@ export default function MessagesPage() {
       <div className="mt-6 space-y-3">
         {result?.items.length ? (
           result.items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="block w-full border border-white/10 p-4 text-left hover:border-gold/30"
-              onClick={async () => {
-                setOpen(item);
-                if (item.status === "new") await markMessageRead(item.id);
-              }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-medium">{item.subject}</p>
-                <StatusBadge status={item.status} />
-              </div>
-              <p className="mt-1 text-sm text-muted">
-                {item.name} · {formatDateTime(item.createdAt)}
-              </p>
-            </button>
+            <div key={item.id} className="flex items-start gap-3 border border-white/10 p-4 hover:border-gold/30">
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-left"
+                onClick={async () => {
+                  setOpen(item);
+                  if (item.status === "new") await markMessageRead(item.id);
+                }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-medium">{item.subject}</p>
+                  <StatusBadge status={item.status} />
+                </div>
+                <p className="mt-1 text-sm text-muted">
+                  {item.name} · {formatDateTime(item.createdAt)}
+                </p>
+              </button>
+              <DeleteRecordButton
+                title="Delete this message?"
+                onDelete={async () => {
+                  await deleteMessage(item.id);
+                  if (open?.id === item.id) setOpen(null);
+                  setReload((value) => value + 1);
+                }}
+              />
+            </div>
           ))
         ) : (
           <EmptyState

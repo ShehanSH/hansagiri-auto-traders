@@ -12,7 +12,7 @@ import {
   upsertDemoCustomer,
   upsertPublicCustomer,
 } from "@/lib/services/customers-shared";
-import { loadCrmRecords } from "@/lib/services/crm-live";
+import { loadCrmRecords, deleteCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -183,6 +183,12 @@ export async function markMessageRead(id: string): Promise<void> {
   await updateDoc(doc(getDb(), COLLECTIONS.contactMessages, id), {
     status: "read",
     updatedAt: nowIso(),
+  });
+}
+
+export async function deleteMessage(id: string): Promise<void> {
+  await deleteCrmRecord(COLLECTIONS.contactMessages, id, () => {
+    demoStore.messages = demoStore.messages.filter((item) => item.id !== id);
   });
 }
 

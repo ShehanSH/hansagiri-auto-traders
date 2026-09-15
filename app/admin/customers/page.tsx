@@ -6,8 +6,9 @@ import { CUSTOMER_STATUSES } from "@/config/constants";
 import { Input, Select } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { listCustomers, type CustomerActivityFilter } from "@/lib/services/crm";
+import { listCustomers, deleteCustomer, type CustomerActivityFilter } from "@/lib/services/crm";
 import { statusLabel } from "@/utils/format";
 import type { Customer, CustomerStatus, PaginatedResult } from "@/types";
 
@@ -17,11 +18,12 @@ export default function CustomersPage() {
   const [status, setStatus] = useState<CustomerStatus | "">("");
   const [activity, setActivity] = useState<CustomerActivityFilter>("");
   const [result, setResult] = useState<PaginatedResult<Customer> | null>(null);
+  const [reload, setReload] = useState(0);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
     listCustomers({ page, search: debouncedSearch, status, activity }).then(setResult);
-  }, [page, debouncedSearch, status, activity]);
+  }, [page, debouncedSearch, status, activity, reload]);
 
   const filtered = Boolean(debouncedSearch || status || activity);
 
@@ -76,6 +78,7 @@ export default function CustomersPage() {
                 <th className="px-3 py-3">Phone</th>
                 <th className="px-3 py-3">Email</th>
                 <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -90,6 +93,15 @@ export default function CustomersPage() {
                   <td className="px-3 py-3">{item.email}</td>
                   <td className="px-3 py-3">
                     <StatusBadge status={item.status} />
+                  </td>
+                  <td className="px-3 py-3">
+                    <DeleteRecordButton
+                      title="Delete this customer?"
+                      onDelete={async () => {
+                        await deleteCustomer(item.id);
+                        setReload((value) => value + 1);
+                      }}
+                    />
                   </td>
                 </tr>
               ))}

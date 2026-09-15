@@ -1,20 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { CUSTOMER_STATUSES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { addCustomerNote, getCustomer, updateCustomer } from "@/lib/services/crm";
+import { addCustomerNote, deleteCustomer, getCustomer, updateCustomer } from "@/lib/services/crm";
 import { formatDateTime, statusLabel } from "@/utils/format";
 import { toUserMessage } from "@/utils/errors";
 import type { Customer, CustomerStatus } from "@/types";
 
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const toast = useToast();
   const { admin } = useAdminAuth();
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -65,7 +67,16 @@ export default function CustomerDetailPage() {
     <div className="max-w-3xl space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">{customer.name}</h1>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status} />
+          <DeleteRecordButton
+            title="Delete this customer?"
+            onDelete={async () => {
+              await deleteCustomer(customer.id);
+              router.push("/admin/customers");
+            }}
+          />
+        </div>
       </div>
       <p className="text-sm">
         {customer.phone} · {customer.email || "—"} · WhatsApp {customer.whatsapp || "—"}

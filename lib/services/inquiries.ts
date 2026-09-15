@@ -1,7 +1,5 @@
 import {
   collection,
-  deleteDoc,
-  doc,
   getDocs,
   limit,
   orderBy,
@@ -19,7 +17,7 @@ import {
   upsertDemoCustomer,
   upsertPublicCustomer,
 } from "@/lib/services/customers-shared";
-import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord, deleteCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -152,12 +150,9 @@ export async function addInquiryNote(
 }
 
 export async function deleteInquiry(id: string): Promise<void> {
-  await ensureFirebaseConfigured();
-  if (isMemoryCatalog()) {
+  await deleteCrmRecord(COLLECTIONS.inquiries, id, () => {
     demoStore.inquiries = demoStore.inquiries.filter((item) => item.id !== id);
-    return;
-  }
-  await deleteDoc(doc(getDb(), COLLECTIONS.inquiries, id));
+  });
 }
 
 export async function getInquiryByVehicle(vehicleId: string): Promise<Inquiry[]> {

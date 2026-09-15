@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Input, Select } from "@/components/ui/Field";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
-import { listInquiries } from "@/lib/services/inquiries";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
+import { listInquiries, deleteInquiry } from "@/lib/services/inquiries";
 import { INQUIRY_SOURCES, INQUIRY_STATUSES } from "@/config/constants";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { formatDate, statusLabel } from "@/utils/format";
@@ -17,11 +18,12 @@ export default function InquiriesPage() {
   const [status, setStatus] = useState<InquiryStatus | "">("");
   const [source, setSource] = useState<InquirySource | "">("");
   const [result, setResult] = useState<PaginatedResult<Inquiry> | null>(null);
+  const [reload, setReload] = useState(0);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
     listInquiries({ page, search: debouncedSearch, status, source }).then(setResult);
-  }, [page, debouncedSearch, status, source]);
+  }, [page, debouncedSearch, status, source, reload]);
 
   const filtered = Boolean(debouncedSearch || status || source);
 
@@ -79,6 +81,7 @@ export default function InquiriesPage() {
                 <th className="px-3 py-3">Date</th>
                 <th className="px-3 py-3">Status</th>
                 <th className="px-3 py-3">Source</th>
+                <th className="px-3 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -96,6 +99,15 @@ export default function InquiriesPage() {
                     <StatusBadge status={item.status} />
                   </td>
                   <td className="px-3 py-3">{statusLabel(item.source)}</td>
+                  <td className="px-3 py-3">
+                    <DeleteRecordButton
+                      title="Delete this enquiry?"
+                      onDelete={async () => {
+                        await deleteInquiry(item.id);
+                        setReload((value) => value + 1);
+                      }}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

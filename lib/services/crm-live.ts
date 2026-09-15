@@ -1,5 +1,5 @@
 import { FirebaseError } from "firebase/app";
-import { doc, setDoc, updateDoc, type DocumentData } from "firebase/firestore";
+import { doc, deleteDoc, setDoc, updateDoc, type DocumentData } from "firebase/firestore";
 import { getDb } from "@/lib/firebase/client";
 import { ensureDemoCrmLoaded, persistDemoCrm } from "@/lib/demo/sync-crm";
 import { ensureFirebaseConfigured, isDemoMode, isFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
@@ -88,4 +88,22 @@ export async function saveCrmRecord<T extends { id: string }>(
   }
 
   if (demoItem) Object.assign(demoItem, data);
+}
+
+export async function deleteCrmRecord(collectionName: string, id: string, removeFromDemo: () => void): Promise<void> {
+  await ensureFirebaseConfigured();
+  removeFromDemo();
+
+  if (isMemoryCatalog()) {
+    await persistDemoCrm();
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(getDb(), collectionName, id));
+  } catch (error) {
+    if (!isNotFoundError(error)) throw error;
+  }
+
+  if (isDemoMode()) await persistDemoCrm();
 }

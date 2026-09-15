@@ -6,7 +6,7 @@ import { demoStore } from "@/lib/demo/store";
 import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord, deleteCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -211,4 +211,10 @@ export async function addTradeInNote(
   if (!item) throw new AppError("Trade-in not found", "not_found");
   const adminNotes = [{ ...note, id: `n_${Date.now()}` }, ...(item.adminNotes ?? [])];
   await updateTradeIn(id, { adminNotes });
+}
+
+export async function deleteTradeIn(id: string): Promise<void> {
+  await deleteCrmRecord(COLLECTIONS.tradeIns, id, () => {
+    demoStore.tradeIns = demoStore.tradeIns.filter((item) => item.id !== id);
+  });
 }

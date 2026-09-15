@@ -6,7 +6,7 @@ import { demoStore } from "@/lib/demo/store";
 import { ensureFirebaseConfigured, isMemoryCatalog } from "@/lib/env";
 import { nowIso } from "@/lib/firebase/timestamps";
 import { customerDocId, upsertDemoCustomer, upsertPublicCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord, deleteCrmRecord } from "@/lib/services/crm-live";
 import { notifyNewRecord } from "@/lib/services/notifications";
 import { canSubmit } from "@/utils/spam";
 import { AppError } from "@/utils/errors";
@@ -141,4 +141,10 @@ export async function addTestDriveNote(
   const notes = [{ ...note, id: `n_${Date.now()}` }, ...(item.notes ?? [])];
   const current = { ...item, notes };
   await saveCrmRecord(COLLECTIONS.testDrives, id, { notes }, demoStore.testDrives, current);
+}
+
+export async function deleteTestDrive(id: string): Promise<void> {
+  await deleteCrmRecord(COLLECTIONS.testDrives, id, () => {
+    demoStore.testDrives = demoStore.testDrives.filter((item) => item.id !== id);
+  });
 }

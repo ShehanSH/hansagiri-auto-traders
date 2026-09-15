@@ -16,7 +16,7 @@ import { nowIso } from "@/lib/firebase/timestamps";
 import { paginate } from "@/utils/vehicle-query";
 import type { ActivityLog, Customer, CustomerStatus, PaginatedResult } from "@/types";
 import { appendNote, normalizeCustomer } from "@/lib/services/customers-shared";
-import { loadCrmRecords, saveCrmRecord } from "@/lib/services/crm-live";
+import { loadCrmRecords, saveCrmRecord, deleteCrmRecord } from "@/lib/services/crm-live";
 import { createDocument } from "@/lib/firebase/documents";
 
 export async function logActivity(input: Omit<ActivityLog, "id" | "timestamp">): Promise<void> {
@@ -122,4 +122,10 @@ export async function addCustomerNote(
   if (!customer) return;
   const notes = appendNote(customer.notes ?? [], body, userId, userName);
   await updateCustomer(id, { notes });
+}
+
+export async function deleteCustomer(id: string): Promise<void> {
+  await deleteCrmRecord(COLLECTIONS.customers, id, () => {
+    demoStore.customers = demoStore.customers.filter((item) => item.id !== id);
+  });
 }

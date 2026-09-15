@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { INQUIRY_STATUSES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { addInquiryNote, getInquiry, updateInquiry } from "@/lib/services/inquiries";
+import { addInquiryNote, deleteInquiry, getInquiry, updateInquiry } from "@/lib/services/inquiries";
 import { logActivity } from "@/lib/services/crm";
 import { formatDateTime, statusLabel } from "@/utils/format";
 import { toUserMessage } from "@/utils/errors";
@@ -18,6 +19,7 @@ import type { Inquiry, InquiryStatus } from "@/types";
 
 export default function InquiryDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const toast = useToast();
   const { admin } = useAdminAuth();
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
@@ -79,7 +81,16 @@ export default function InquiryDetailPage() {
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-3xl">{inquiry.name}</h1>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status} />
+          <DeleteRecordButton
+            title="Delete this enquiry?"
+            onDelete={async () => {
+              await deleteInquiry(inquiry.id);
+              router.push("/admin/inquiries");
+            }}
+          />
+        </div>
       </div>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>Phone: {tel ? <a href={tel}>{inquiry.phone}</a> : inquiry.phone}</div>

@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { TRADE_IN_STATUSES } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { Input, Select, Textarea } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { addTradeInNote, getTradeIn, updateTradeIn } from "@/lib/services/trade-ins";
+import { addTradeInNote, deleteTradeIn, getTradeIn, updateTradeIn } from "@/lib/services/trade-ins";
 import { logActivity } from "@/lib/services/crm";
 import { formatDateTime, formatMileage, formatPrice, statusLabel } from "@/utils/format";
 import { toUserMessage } from "@/utils/errors";
@@ -17,6 +18,7 @@ import type { TradeInRequest, TradeInStatus } from "@/types";
 
 export default function TradeInDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const toast = useToast();
   const { admin } = useAdminAuth();
   const [item, setItem] = useState<TradeInRequest | null>(null);
@@ -76,7 +78,16 @@ export default function TradeInDetailPage() {
     <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-3xl">{item.name}</h1>
-        <StatusBadge status={status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={status} />
+          <DeleteRecordButton
+            title="Delete this trade-in?"
+            onDelete={async () => {
+              await deleteTradeIn(item.id);
+              router.push("/admin/trade-ins");
+            }}
+          />
+        </div>
       </div>
       <p className="text-sm">
         {item.year} {item.make} {item.model} · {formatMileage(item.mileage)}

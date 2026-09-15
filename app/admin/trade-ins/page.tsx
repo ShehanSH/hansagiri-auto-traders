@@ -6,8 +6,9 @@ import { TRADE_IN_STATUSES } from "@/config/constants";
 import { Input, Select } from "@/components/ui/Field";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { EmptyState, Pagination } from "@/components/ui/Feedback";
+import { DeleteRecordButton } from "@/components/admin/DeleteRecordButton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { getTradeInFilterOptions, listTradeIns } from "@/lib/services/trade-ins";
+import { getTradeInFilterOptions, listTradeIns, deleteTradeIn } from "@/lib/services/trade-ins";
 import { formatDate, statusLabel } from "@/utils/format";
 import type { PaginatedResult, TradeInRequest, TradeInStatus } from "@/types";
 
@@ -18,6 +19,7 @@ export default function TradeInsPage() {
   const [make, setMake] = useState("");
   const [makes, setMakes] = useState<string[]>([]);
   const [result, setResult] = useState<PaginatedResult<TradeInRequest> | null>(null);
+  const [reload, setReload] = useState(0);
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function TradeInsPage() {
 
   useEffect(() => {
     listTradeIns({ page, search: debouncedSearch, status, make }).then(setResult);
-  }, [page, debouncedSearch, status, make]);
+  }, [page, debouncedSearch, status, make, reload]);
 
   const filtered = Boolean(debouncedSearch || status || make);
 
@@ -83,6 +85,7 @@ export default function TradeInsPage() {
                 <th className="px-3 py-3">Vehicle</th>
                 <th className="px-3 py-3">Submitted</th>
                 <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -99,6 +102,15 @@ export default function TradeInsPage() {
                   <td className="px-3 py-3">{formatDate(item.createdAt)}</td>
                   <td className="px-3 py-3">
                     <StatusBadge status={item.status} />
+                  </td>
+                  <td className="px-3 py-3">
+                    <DeleteRecordButton
+                      title="Delete this trade-in?"
+                      onDelete={async () => {
+                        await deleteTradeIn(item.id);
+                        setReload((value) => value + 1);
+                      }}
+                    />
                   </td>
                 </tr>
               ))}
