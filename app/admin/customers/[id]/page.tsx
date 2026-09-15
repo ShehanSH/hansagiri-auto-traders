@@ -55,9 +55,9 @@ export default function CustomerDetailPage() {
       } else {
         setCustomer({ ...customer, status });
       }
-      toast.push("Saved");
+      toast.push("Customer details have been saved.");
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not save this customer. Please try again."), "error");
     } finally {
       setSaving(false);
     }

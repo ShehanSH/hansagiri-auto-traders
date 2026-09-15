@@ -50,7 +50,7 @@ export function TestDriveForm({
       toast.push("Test drive requested. Our team will confirm the appointment.");
       form.reset();
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not send the test drive request. Please try again."), "error");
     } finally {
       setLoading(false);
     }

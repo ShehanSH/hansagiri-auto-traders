@@ -165,7 +165,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
         ]);
       }
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not upload the image. Please try again."), "error");
     } finally {
       setUploading(false);
       setUploadStatus("");
@@ -204,7 +204,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
         toast.push(
           parsed.data.status === "draft"
             ? "Vehicle saved as a draft. Set status to Available to show it on the website."
-            : "Vehicle saved",
+            : "Vehicle saved. The listing is now updated.",
         );
       } else {
         const created = await createVehicle({ ...parsed.data, features }, admin.uid, images);
@@ -218,12 +218,12 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
         toast.push(
           parsed.data.status === "draft"
             ? "Vehicle saved as a draft. Set status to Available to show it on the website."
-            : "Vehicle created",
+            : "Vehicle created and is ready on the website.",
         );
         router.replace(`/admin/vehicles/${created.id}`);
       }
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not save the vehicle. Please try again."), "error");
     } finally {
       setLoading(false);
     }
@@ -421,7 +421,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
             entityId: vehicleId,
           });
           setConfirm(null);
-          toast.push("Vehicle archived");
+          toast.push("The vehicle was archived and is now hidden from the website.");
           router.push("/admin/vehicles");
         }}
       />
@@ -443,7 +443,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
             entityId: vehicleId,
           });
           setConfirm(null);
-          toast.push("Vehicle deleted");
+          toast.push("The vehicle listing was deleted successfully.");
           router.push("/admin/vehicles");
         }}
       />

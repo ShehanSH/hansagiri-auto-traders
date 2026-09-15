@@ -54,9 +54,9 @@ export function DeleteRecordButton({
             try {
               await onDelete();
               setOpen(false);
-              toast.push("Deleted");
+              toast.push("The record was deleted successfully.");
             } catch (error) {
-              toast.push(toUserMessage(error), "error");
+              toast.push(toUserMessage(error, "Could not delete this record. Please try again."), "error");
             } finally {
               setDeleting(false);
             }

@@ -66,9 +66,9 @@ export default function TradeInDetailPage() {
       } else {
         setItem({ ...item, status });
       }
-      toast.push("Saved");
+      toast.push("Trade-in request has been saved.");
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not save this trade-in. Please try again."), "error");
     } finally {
       setSaving(false);
     }
@@ -121,7 +121,7 @@ export default function TradeInDetailPage() {
         onBlur={async (event) => {
           const estimatedValuation = Number(event.target.value) || null;
           await updateTradeIn(item.id, { estimatedValuation });
-          toast.push("Valuation saved");
+          toast.push("Estimated valuation has been saved.");
         }}
       />
       {item.estimatedValuation ? (

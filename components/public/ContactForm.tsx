@@ -35,10 +35,10 @@ export function ContactForm({ subject = "" }: { subject?: string }) {
     try {
       await submitContact(parsed.data);
       markClientCooldown("contact");
-      toast.push("Message sent. We will get back to you.");
+      toast.push("Your message was sent. Our team will get back to you shortly.");
       form.reset();
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not send your message. Please try again."), "error");
     } finally {
       setLoading(false);
     }
@@ -86,10 +86,10 @@ export function FinancingForm() {
     try {
       await submitFinancing(parsed.data);
       markClientCooldown("financing");
-      toast.push("Enquiry sent. Final terms depend on institution and dealership approval.");
+      toast.push("Financing enquiry sent. Final terms depend on institution and dealership approval.");
       form.reset();
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not send the financing enquiry. Please try again."), "error");
     } finally {
       setLoading(false);
     }

@@ -69,9 +69,9 @@ export default function InquiryDetailPage() {
       } else {
         setInquiry({ ...inquiry, status });
       }
-      toast.push("Saved");
+      toast.push("Enquiry updated. Status and notes have been saved.");
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not save this enquiry. Please try again."), "error");
     } finally {
       setSaving(false);
     }

@@ -75,7 +75,7 @@ export function TradeInForm() {
       form.reset();
       setImages([]);
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not send the trade-in request. Please try again."), "error");
     } finally {
       setLoading(false);
     }

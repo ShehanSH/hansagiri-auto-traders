@@ -8,7 +8,7 @@ export class AppError extends Error {
   }
 }
 
-export function toUserMessage(error: unknown): string {
+export function toUserMessage(error: unknown, fallback = "Something went wrong. Please try again."): string {
   if (error instanceof AppError) return error.message;
 
   if (typeof error === "object" && error && "code" in error) {
@@ -51,5 +51,5 @@ export function toUserMessage(error: unknown): string {
     }
   }
 
-  return "Something went wrong. Please try again.";
+  return fallback;
 }

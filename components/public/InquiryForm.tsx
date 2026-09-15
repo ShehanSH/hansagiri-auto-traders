@@ -57,7 +57,7 @@ export function InquiryForm({
       router.refresh();
       form.reset();
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not send your enquiry. Please try again."), "error");
     } finally {
       setLoading(false);
     }

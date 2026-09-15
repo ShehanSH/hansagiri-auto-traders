@@ -71,9 +71,9 @@ export default function SettingsPage() {
         entityId: "site",
       });
       setSettings(next);
-      toast.push("Settings saved");
+      toast.push("Website settings have been saved.");
     } catch (error) {
-      toast.push(toUserMessage(error), "error");
+      toast.push(toUserMessage(error, "Could not save settings. Please try again."), "error");
     }
   }
 

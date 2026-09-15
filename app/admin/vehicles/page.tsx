@@ -223,7 +223,7 @@ export default function AdminVehiclesPage() {
                 entityType: "vehicle",
                 entityId: pendingDelete.id,
               });
-              toast.push("Vehicle deleted");
+              toast.push("The vehicle listing was deleted successfully.");
               setPendingDelete(null);
               load();
             } finally {
