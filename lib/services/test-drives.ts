@@ -78,11 +78,20 @@ async function fetchLiveTestDrives(): Promise<TestDriveRequest[]> {
       limit(200),
     ),
   );
-  return mapDocs<TestDriveRequest>(snapshot);
+  return mapDocs<TestDriveRequest>(snapshot).map(normalizeTestDrive);
+}
+
+function normalizeTestDrive(item: TestDriveRequest): TestDriveRequest {
+  return {
+    ...item,
+    notes: item.notes ?? [],
+    status: item.status ?? "pending",
+  };
 }
 
 async function loadTestDrives(): Promise<TestDriveRequest[]> {
-  return loadCrmRecords(() => demoStore.testDrives, fetchLiveTestDrives);
+  const items = await loadCrmRecords(() => demoStore.testDrives, fetchLiveTestDrives);
+  return items.map(normalizeTestDrive);
 }
 
 export async function listTestDrives(options: {
@@ -139,7 +148,7 @@ export async function addTestDriveNote(
 ): Promise<void> {
   const item = await getTestDrive(id);
   if (!item) throw new AppError("Request not found", "not_found");
-  const notes = [{ ...note, id: `n_${Date.now()}` }, ...item.notes];
+  const notes = [{ ...note, id: `n_${Date.now()}` }, ...(item.notes ?? [])];
   await ensureFirebaseConfigured();
   if (isMemoryCatalog()) {
     item.notes = notes;

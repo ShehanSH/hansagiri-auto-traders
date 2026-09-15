@@ -144,11 +144,23 @@ async function fetchLiveTradeIns(): Promise<TradeInRequest[]> {
       limit(200),
     ),
   );
-  return mapDocs<TradeInRequest>(snapshot);
+  return mapDocs<TradeInRequest>(snapshot).map(normalizeTradeIn);
+}
+
+function normalizeTradeIn(item: TradeInRequest): TradeInRequest {
+  return {
+    ...item,
+    images: item.images ?? [],
+    adminNotes: item.adminNotes ?? [],
+    notes: item.notes ?? "",
+    valuationNotes: item.valuationNotes ?? "",
+    status: item.status ?? "new",
+  };
 }
 
 async function loadTradeIns(): Promise<TradeInRequest[]> {
-  return loadCrmRecords(() => demoStore.tradeIns, fetchLiveTradeIns);
+  const items = await loadCrmRecords(() => demoStore.tradeIns, fetchLiveTradeIns);
+  return items.map(normalizeTradeIn);
 }
 
 export async function listTradeIns(options: {
@@ -206,7 +218,7 @@ export async function addTradeInNote(
 ): Promise<void> {
   const item = await getTradeIn(id);
   if (!item) throw new AppError("Trade-in not found", "not_found");
-  const adminNotes = [{ ...note, id: `n_${Date.now()}` }, ...item.adminNotes];
+  const adminNotes = [{ ...note, id: `n_${Date.now()}` }, ...(item.adminNotes ?? [])];
   await ensureFirebaseConfigured();
   if (isMemoryCatalog()) {
     item.adminNotes = adminNotes;
