@@ -10,10 +10,12 @@ import {
   VEHICLE_FEATURES,
   VEHICLE_STATUSES,
   VEHICLE_TYPES,
+  MAX_VEHICLE_IMAGES,
 } from "@/config/constants";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input, Select, Textarea } from "@/components/ui/Field";
+import { ImageUploadButton } from "@/components/ui/ImageUploadButton";
 import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { hasRole } from "@/lib/auth/permissions";
@@ -41,6 +43,8 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const canWrite = hasRole(admin?.role, "vehicles:write") || hasRole(admin?.role, "*");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
   const [images, setImages] = useState<VehicleImage[]>([]);
   const [features, setFeatures] = useState<VehicleFeature[]>([]);
   const [confirm, setConfirm] = useState<"archive" | "delete" | null>(null);
@@ -130,22 +134,41 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
   }
 
   async function onFiles(files: FileList | null) {
-    if (!files || !admin) return;
+    if (!files?.length || !admin || uploading) return;
+    const selected = Array.from(files).slice(0, Math.max(0, MAX_VEHICLE_IMAGES - images.length));
+    if (!selected.length) {
+      toast.push(`You can add up to ${MAX_VEHICLE_IMAGES} images.`, "error");
+      return;
+    }
+
+    setUploading(true);
+    setUploadStatus(
+      selected.length === 1 ? "Image uploading…" : `Image uploading… 1 of ${selected.length}`,
+    );
     try {
       await ensureFirebaseConfigured();
-      const uploaded: VehicleImage[] = [];
-      for (const file of Array.from(files)) {
+      for (const [index, file] of selected.entries()) {
+        setUploadStatus(
+          selected.length === 1
+            ? "Image uploading…"
+            : `Image uploading… ${index + 1} of ${selected.length}`,
+        );
         const asset = await uploadAdminImage(file, "vehicles", admin.uid);
-        uploaded.push({
-          url: asset.url,
-          path: asset.path,
-          alt: `${name || "Vehicle"} photo ${images.length + uploaded.length + 1}`,
-          sortOrder: images.length + uploaded.length,
-        });
+        setImages((current) => [
+          ...current,
+          {
+            url: asset.url,
+            path: asset.path,
+            alt: `${name || "Vehicle"} photo ${current.length + 1}`,
+            sortOrder: current.length,
+          },
+        ]);
       }
-      setImages((current) => [...current, ...uploaded]);
     } catch (error) {
       toast.push(toUserMessage(error), "error");
+    } finally {
+      setUploading(false);
+      setUploadStatus("");
     }
   }
 
@@ -323,12 +346,12 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
       </fieldset>
       <div>
         <p className="mb-2 text-xs uppercase tracking-[0.18em] text-gold-champagne/80">Images</p>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
-          multiple
+        <ImageUploadButton
           disabled={!canWrite}
-          onChange={(event) => onFiles(event.target.files)}
+          uploading={uploading}
+          status={uploadStatus}
+          buttonLabel="Add images"
+          onSelect={onFiles}
         />
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
           {images.map((image, index) => (
@@ -363,7 +386,7 @@ export function VehicleEditor({ vehicleId }: { vehicleId?: string }) {
       </div>
       {canWrite ? (
         <div className="flex flex-wrap gap-3">
-          <Button type="submit" loading={loading}>
+          <Button type="submit" loading={loading} disabled={uploading}>
             Save vehicle
           </Button>
           {vehicleId ? (

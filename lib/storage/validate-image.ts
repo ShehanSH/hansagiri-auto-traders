@@ -15,7 +15,7 @@ export function sanitizeFileName(name: string): string {
 }
 
 export const PUBLIC_UPLOAD_FOLDERS = ["trade-in-uploads"] as const;
-export const ADMIN_UPLOAD_FOLDERS = ["media", "vehicles"] as const;
+export const ADMIN_UPLOAD_FOLDERS = ["vehicles"] as const;
 
 export function isAllowedUploadFolder(folder: string): boolean {
   return (

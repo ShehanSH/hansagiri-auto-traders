@@ -86,7 +86,7 @@ export async function uploadPublicTradeInImage(file: File): Promise<VehicleImage
 
 export async function uploadAdminImage(
   file: File,
-  folder: string,
+  folder: "vehicles",
   userId: string,
 ): Promise<MediaAsset> {
   validateImageFile(file);

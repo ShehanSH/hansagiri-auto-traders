@@ -7,7 +7,6 @@ import {
   Activity,
   Car,
   Handshake,
-  ImageIcon,
   Inbox,
   LayoutDashboard,
   LogOut,
@@ -28,7 +27,6 @@ const NAV = [
   { href: "/admin/test-drives", label: "Test Drives", icon: Car, permission: "test_drives" },
   { href: "/admin/trade-ins", label: "Trade-Ins", icon: Handshake, permission: "trade_ins" },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare, permission: "messages" },
-  { href: "/admin/media", label: "Media", icon: ImageIcon, permission: "media" },
   { href: "/admin/activity", label: "Activity", icon: Activity, permission: "activity" },
   { href: "/admin/settings", label: "Settings", icon: Settings, permission: "settings" },
 ];

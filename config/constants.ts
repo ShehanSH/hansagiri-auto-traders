@@ -164,7 +164,6 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     "trade_ins",
     "customers",
     "messages",
-    "media",
     "settings",
     "activity",
   ],

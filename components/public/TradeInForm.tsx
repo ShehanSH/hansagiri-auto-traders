@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Honeypot, Input, Select, Textarea } from "@/components/ui/Field";
+import { ImageUploadButton } from "@/components/ui/ImageUploadButton";
 import { useToast } from "@/components/ui/Toast";
 import { FUEL_TYPES, MAX_TRADE_IN_IMAGES, TRANSMISSIONS } from "@/config/constants";
 import { tradeInSchema } from "@/lib/validation/trade-in";
@@ -17,17 +18,36 @@ export function TradeInForm() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [images, setImages] = useState<VehicleImage[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
 
   async function onFiles(files: FileList | null) {
-    if (!files) return;
+    if (!files?.length || uploading) return;
+    const selected = Array.from(files).slice(0, Math.max(0, MAX_TRADE_IN_IMAGES - images.length));
+    if (!selected.length) {
+      toast.push(`You can add up to ${MAX_TRADE_IN_IMAGES} photos.`, "error");
+      return;
+    }
+
+    setUploading(true);
+    setUploadStatus(
+      selected.length === 1 ? "Image uploading…" : `Image uploading… 1 of ${selected.length}`,
+    );
     try {
-      const next: VehicleImage[] = [];
-      for (const file of Array.from(files).slice(0, MAX_TRADE_IN_IMAGES - images.length)) {
-        next.push(await uploadPublicTradeInImage(file));
+      for (const [index, file] of selected.entries()) {
+        setUploadStatus(
+          selected.length === 1
+            ? "Image uploading…"
+            : `Image uploading… ${index + 1} of ${selected.length}`,
+        );
+        const image = await uploadPublicTradeInImage(file);
+        setImages((current) => [...current, image].slice(0, MAX_TRADE_IN_IMAGES));
       }
-      setImages((current) => [...current, ...next].slice(0, MAX_TRADE_IN_IMAGES));
     } catch (error) {
       toast.push(toUserMessage(error), "error");
+    } finally {
+      setUploading(false);
+      setUploadStatus("");
     }
   }
 
@@ -91,22 +111,20 @@ export function TradeInForm() {
         <Input name="expectedPrice" type="number" label="Expected price (optional)" />
       </div>
       <Textarea name="notes" label="Additional notes" />
-      <label className="block space-y-2">
-        <span className="text-xs uppercase tracking-[0.18em] text-gold-champagne/80">
-          Vehicle photos
-        </span>
-        <input
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
-          multiple
-          className="block w-full text-sm text-muted file:mr-3 file:border file:border-gold file:bg-transparent file:px-3 file:py-2 file:text-gold"
-          onChange={(event) => onFiles(event.target.files)}
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-[0.18em] text-gold-champagne/80">Vehicle photos</p>
+        <ImageUploadButton
+          uploading={uploading}
+          status={uploadStatus}
+          buttonLabel="Add photos"
+          hint={`JPG, PNG, WebP, or AVIF. Up to ${MAX_TRADE_IN_IMAGES} photos.`}
+          onSelect={onFiles}
         />
-      </label>
+      </div>
       {images.length ? (
         <p className="text-xs text-muted">{images.length} image(s) ready to send</p>
       ) : null}
-      <Button type="submit" loading={loading} className="w-full">
+      <Button type="submit" loading={loading} disabled={uploading} className="w-full">
         Submit Trade-In
       </Button>
     </form>
