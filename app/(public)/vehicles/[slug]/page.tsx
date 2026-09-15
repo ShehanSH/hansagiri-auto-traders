@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { InquiryForm } from "@/components/public/InquiryForm";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { StickyMobileCta } from "@/components/public/StickyMobileCta";
+import { VehicleActions } from "@/components/public/VehicleActions";
+import { VehicleFeatures } from "@/components/public/VehicleFeatures";
 import { VehicleGallery } from "@/components/public/VehicleGallery";
 import { VehicleSpecs } from "@/components/public/VehicleSpecs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Phone } from "lucide-react";
-import { WhatsAppIcon } from "@/components/icons/SocialIcons";
 import { getSettings } from "@/lib/services/settings.server";
 import { getVehicleBySlug } from "@/lib/services/vehicles";
 import { buildPageMetadata, resolveVehicleSeo } from "@/lib/seo/content";
@@ -70,40 +70,11 @@ export default async function VehicleDetailPage({ params }: Props) {
           <p className="mt-4 text-3xl text-gold-champagne">
             {formatPrice(vehicle.price, vehicle.currency || settings.currency)}
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            {tel ? (
-              <a
-                href={tel}
-                className="inline-flex items-center justify-center gap-2 bg-gold px-5 py-3 text-center text-xs uppercase tracking-[0.16em] text-dark"
-              >
-                <Phone className="h-4 w-4" />
-                Call Now
-              </a>
-            ) : null}
-            {wa ? (
-              <a
-                href={wa}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 border border-gold px-5 py-3 text-center text-xs uppercase tracking-[0.16em] text-gold"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                WhatsApp
-              </a>
-            ) : null}
-            <Link
-              href={`/test-drive?vehicle=${vehicle.id}`}
-              className="border border-white/20 px-5 py-3 text-center text-xs uppercase tracking-[0.16em]"
-            >
-              Book Test Drive
-            </Link>
-            <a
-              href="#enquiry"
-              className="border border-white/20 px-5 py-3 text-center text-xs uppercase tracking-[0.16em]"
-            >
-              Send Inquiry
-            </a>
-          </div>
+          <VehicleActions
+            tel={tel}
+            whatsapp={wa}
+            testDriveHref={`/test-drive?vehicle=${vehicle.id}`}
+          />
           <div className="mt-10">
             <VehicleSpecs vehicle={vehicle} />
           </div>
@@ -119,18 +90,7 @@ export default async function VehicleDetailPage({ params }: Props) {
         </section>
       ) : null}
 
-      {vehicle.features.length ? (
-        <section className="mt-12">
-          <h2 className="font-display text-2xl">Features</h2>
-          <ul className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {vehicle.features.map((feature) => (
-              <li key={feature} className="border border-gold/15 px-4 py-3 text-sm">
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <VehicleFeatures features={vehicle.features} />
 
       <section id="enquiry" className="mt-16 grid gap-10 lg:grid-cols-2">
         <div>
