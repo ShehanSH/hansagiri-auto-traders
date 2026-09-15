@@ -10,7 +10,8 @@ import { useToast } from "@/components/ui/Toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { addInquiryNote, getInquiry, updateInquiry } from "@/lib/services/inquiries";
 import { logActivity } from "@/lib/services/crm";
-import { formatDateTime } from "@/utils/format";
+import { formatDateTime, statusLabel } from "@/utils/format";
+import { toUserMessage } from "@/utils/errors";
 import { toTelHref } from "@/utils/phone";
 import { toWhatsAppHref } from "@/utils/whatsapp";
 import type { Inquiry, InquiryStatus } from "@/types";
@@ -20,10 +21,15 @@ export default function InquiryDetailPage() {
   const toast = useToast();
   const { admin } = useAdminAuth();
   const [inquiry, setInquiry] = useState<Inquiry | null>(null);
+  const [status, setStatus] = useState<InquiryStatus>("new");
   const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    getInquiry(params.id).then(setInquiry);
+    getInquiry(params.id).then((item) => {
+      setInquiry(item);
+      if (item) setStatus(item.status);
+    });
   }, [params.id]);
 
   if (!inquiry) return <p className="text-muted">Loading…</p>;
@@ -31,11 +37,49 @@ export default function InquiryDetailPage() {
   const tel = toTelHref(inquiry.phone);
   const wa = toWhatsAppHref(inquiry.whatsapp || inquiry.phone);
 
+  async function onSave() {
+    if (!inquiry || saving) return;
+    setSaving(true);
+    try {
+      await updateInquiry(inquiry.id, { status, lastContact: new Date().toISOString() });
+      if (admin && status !== inquiry.status) {
+        await logActivity({
+          userId: admin.uid,
+          userEmail: admin.email,
+          action: `Inquiry status changed to ${status}`,
+          entityType: "inquiry",
+          entityId: inquiry.id,
+        }).catch(() => undefined);
+      }
+      if (note.trim() && admin) {
+        await addInquiryNote(inquiry.id, {
+          body: note.trim(),
+          createdAt: new Date().toISOString(),
+          createdBy: admin.uid,
+          createdByName: admin.displayName || admin.email,
+        });
+        setNote("");
+      }
+      const next = await getInquiry(inquiry.id);
+      if (next) {
+        setInquiry(next);
+        setStatus(next.status);
+      } else {
+        setInquiry({ ...inquiry, status });
+      }
+      toast.push("Saved");
+    } catch (error) {
+      toast.push(toUserMessage(error), "error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="max-w-3xl space-y-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-display text-3xl">{inquiry.name}</h1>
-        <StatusBadge status={inquiry.status} />
+        <StatusBadge status={status} />
       </div>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <div>Phone: {tel ? <a href={tel}>{inquiry.phone}</a> : inquiry.phone}</div>
@@ -49,43 +93,18 @@ export default function InquiryDetailPage() {
       <p className="text-xs text-muted">Internal notes are never shown to customers.</p>
       <Select
         label="Status"
-        value={inquiry.status}
-        onChange={async (event) => {
-          const status = event.target.value as InquiryStatus;
-          await updateInquiry(inquiry.id, { status, lastContact: new Date().toISOString() });
-          if (admin) {
-            await logActivity({
-              userId: admin.uid,
-              userEmail: admin.email,
-              action: `Inquiry status changed to ${status}`,
-              entityType: "inquiry",
-              entityId: inquiry.id,
-            });
-          }
-          setInquiry({ ...inquiry, status });
-          toast.push("Status updated");
-        }}
+        value={status}
+        onChange={(event) => setStatus(event.target.value as InquiryStatus)}
       >
         {INQUIRY_STATUSES.map((item) => (
-          <option key={item}>{item}</option>
+          <option key={item} value={item}>
+            {statusLabel(item)}
+          </option>
         ))}
       </Select>
       <Textarea label="Internal note" value={note} onChange={(event) => setNote(event.target.value)} />
-      <Button
-        type="button"
-        onClick={async () => {
-          if (!note.trim() || !admin) return;
-          await addInquiryNote(inquiry.id, {
-            body: note.trim(),
-            createdAt: new Date().toISOString(),
-            createdBy: admin.uid,
-            createdByName: admin.displayName || admin.email,
-          });
-          setNote("");
-          setInquiry(await getInquiry(inquiry.id));
-        }}
-      >
-        Add note
+      <Button type="button" loading={saving} onClick={() => void onSave()}>
+        Save
       </Button>
       <ul className="space-y-3 text-sm">
         {inquiry.notes.map((item) => (

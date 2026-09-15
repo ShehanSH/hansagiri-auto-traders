@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes, TextareaHTMLAttributes, SelectHTMLAttributes } from "react";
+import { ChevronDown } from "lucide-react";
 
 const fieldClass =
   "w-full bg-dark border border-white/10 px-4 py-3 text-sm text-white placeholder:text-muted/70 focus:border-gold focus:outline-none disabled:opacity-50";
@@ -60,9 +61,19 @@ export function Select({
   return (
     <label className="block space-y-2" htmlFor={inputId}>
       <span className="text-xs uppercase tracking-[0.18em] text-gold-champagne/80">{label}</span>
-      <select id={inputId} className={`${fieldClass} appearance-none ${className}`} {...props}>
-        {children}
-      </select>
+      <span className="relative block">
+        <select
+          id={inputId}
+          className={`${fieldClass} appearance-none pr-10 scheme-dark cursor-pointer [&_option]:bg-dark [&_option]:text-white ${className}`}
+          {...props}
+        >
+          {children}
+        </select>
+        <ChevronDown
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gold"
+        />
+      </span>
       {hint ? <span className="block text-xs text-muted">{hint}</span> : null}
       {error ? <span className="block text-xs text-danger">{error}</span> : null}
     </label>
