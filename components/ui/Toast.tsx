@@ -30,39 +30,34 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 top-6 z-[80] flex justify-center px-4">
-        <div className="flex w-full max-w-md flex-col items-center gap-3">
+      <div className="pointer-events-none fixed inset-x-0 top-4 z-[80] flex justify-center px-4">
+        <div className="flex w-full max-w-[280px] flex-col items-center gap-2">
           {toasts.map((toast) => {
             const isError = toast.tone === "error";
             return (
               <div
                 key={toast.id}
-                className={`pointer-events-auto relative w-full px-5 py-4 text-center shadow-lg ${
+                className={`pointer-events-auto flex w-full items-center gap-2 px-3 py-2 text-center shadow-md ${
                   isError
                     ? "border border-[#e8a0a0] bg-[#f6d6d6] text-[#7a2e2e]"
                     : "border border-[#9fd4b8] bg-[#d8f3e4] text-[#1f6b4a]"
                 }`}
                 role={isError ? "alert" : "status"}
               >
+                {isError ? (
+                  <CircleAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                )}
+                <p className="min-w-0 flex-1 text-[11px] leading-snug">{toast.message}</p>
                 <button
                   type="button"
-                  className="absolute right-2 top-2 p-1 opacity-70 hover:opacity-100"
+                  className="shrink-0 p-0.5 opacity-60 hover:opacity-100"
                   aria-label="Dismiss notification"
                   onClick={() => dismiss(toast.id)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3" />
                 </button>
-                <div className="mx-auto mb-2 flex justify-center">
-                  {isError ? (
-                    <CircleAlert className="h-6 w-6" aria-hidden="true" />
-                  ) : (
-                    <CheckCircle2 className="h-6 w-6" aria-hidden="true" />
-                  )}
-                </div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]">
-                  {isError ? "Something went wrong" : "Success"}
-                </p>
-                <p className="mt-1.5 text-sm leading-relaxed">{toast.message}</p>
               </div>
             );
           })}
